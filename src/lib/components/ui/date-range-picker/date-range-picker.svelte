@@ -1,26 +1,40 @@
-<script lang="ts" module>
-	import { tv } from 'tailwind-variants';
-	import { cn, type WithElementRef } from '$lib/utils.js';
-	import type { HTMLAttributes } from 'svelte/elements';
-
-	export const dateRangePickerVariants = tv({
-		base: 'flex items-center gap-2'
-	});
-
-	export type DateRangePickerProps = WithElementRef<HTMLAttributes<HTMLDivElement>>;
-</script>
-
 <script lang="ts">
-	import { DatePicker } from '$lib/components/ui/datepicker';
+	import { CalendarDate, type DateValue } from '@internationalized/date';
+	import { RangeCalendar } from '$lib/components/ui/range-calendar';
+	import { Popover, PopoverContent, PopoverTrigger } from '$lib/components/ui/popover';
+	import { Button } from '$lib/components/ui/button';
+	import { cn } from '$lib/utils.js';
+	import type { DateRange } from 'bits-ui';
 
-	let { class: className, ref = $bindable(null), ...restProps }: DateRangePickerProps = $props();
+	let {
+		value = $bindable(),
+		placeholder = $bindable(new CalendarDate(2025, 1, 1)),
+		class: className,
+		...restProps
+	}: {
+		value?: DateRange;
+		placeholder?: DateValue;
+		class?: string;
+		[key: string]: any;
+	} = $props();
 </script>
 
-<div bind:this={ref} class={cn(dateRangePickerVariants(), className)} {...restProps}>
-	<div class="flex-1">
-		<DatePicker placeholder="Start Date" />
-	</div>
-	<div class="flex-1">
-		<DatePicker placeholder="End Date" />
-	</div>
-</div>
+<Popover>
+	<PopoverTrigger>
+		{#snippet child({ props })}
+			<Button
+				variant="outline"
+				class={cn('w-[300px] justify-start text-left font-normal', !value && 'text-muted-foreground', className)}
+				{...props}
+				{...restProps}
+			>
+				{value?.start
+					? `${value.start.toString()} - ${value.end?.toString() || ''}`
+					: 'Pick a date range'}
+			</Button>
+		{/snippet}
+	</PopoverTrigger>
+	<PopoverContent class="w-auto p-0">
+		<RangeCalendar bind:value bind:placeholder />
+	</PopoverContent>
+</Popover>
