@@ -1,0 +1,1 @@
+npm run validate:structure && bash scripts/check-branch.sh
