@@ -11,10 +11,9 @@
 		class: className,
 		...restProps
 	}: {
-		value?: any;
-		placeholder?: any;
+		value?: DateValue;
+		placeholder?: DateValue;
 		class?: string;
-		[key: string]: any;
 	} = $props();
 </script>
 
@@ -23,7 +22,11 @@
 		{#snippet child({ props })}
 			<Button
 				variant="outline"
-				class={cn('w-[240px] justify-start text-left font-normal', !value && 'text-muted-foreground', className)}
+				class={cn(
+					'w-[240px] justify-start text-left font-normal',
+					!value && 'text-muted-foreground',
+					className
+				)}
 				{...props}
 				{...restProps}
 			>
