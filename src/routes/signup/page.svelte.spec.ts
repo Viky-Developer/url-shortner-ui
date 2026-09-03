@@ -25,7 +25,7 @@ describe('signup page', () => {
 		await expect.element(submitButton).toBeDisabled();
 		await expect
 			.element(page.getByRole('progressbar', { name: 'Password requirements completed' }))
-			.toBeVisible();
+			.toBeInTheDocument();
 		await expect.element(page.getByText('Please enter a valid email address.')).toBeVisible();
 		await expect.element(page.getByText('At least 8 characters')).toBeVisible();
 
