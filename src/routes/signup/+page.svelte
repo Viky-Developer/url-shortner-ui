@@ -233,6 +233,7 @@
 						/>
 						<Input
 							id="password"
+							data-testid="password-input"
 							name="password"
 							type={showPassword ? 'text' : 'password'}
 							autocomplete="new-password"

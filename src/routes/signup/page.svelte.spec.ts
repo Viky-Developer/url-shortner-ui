@@ -8,7 +8,7 @@ describe('signup page', () => {
 		render(SignupPage);
 
 		const submitButton = page.getByRole('button', { name: 'Create Account' });
-		const passwordInput = page.getByLabelText(/^Password/);
+		const passwordInput = page.getByTestId('password-input');
 
 		await expect.element(submitButton).toBeDisabled();
 		await expect
