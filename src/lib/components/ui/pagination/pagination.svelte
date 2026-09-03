@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { ChevronLeft, ChevronRight } from '$lib/components/ui/icons';
 	import { cn } from '$lib/utils.js';
 
 	let {
@@ -60,18 +61,7 @@
 			onclick={() => setPage(page - 1)}
 			aria-label="Previous page"
 		>
-			<svg
-				class="size-4"
-				xmlns="http://www.w3.org/2000/svg"
-				viewBox="0 0 24 24"
-				fill="none"
-				stroke="currentColor"
-				stroke-width="2"
-				stroke-linecap="round"
-				stroke-linejoin="round"
-			>
-				<path d="m15 18-6-6 6-6" />
-			</svg>
+			<ChevronLeft class="size-4" />
 		</button>
 
 		{#each visiblePages() as pg, i (typeof pg === 'number' ? `n-${pg}` : `d-${i}`)}
@@ -98,18 +88,7 @@
 			onclick={() => setPage(page + 1)}
 			aria-label="Next page"
 		>
-			<svg
-				class="size-4"
-				xmlns="http://www.w3.org/2000/svg"
-				viewBox="0 0 24 24"
-				fill="none"
-				stroke="currentColor"
-				stroke-width="2"
-				stroke-linecap="round"
-				stroke-linejoin="round"
-			>
-				<path d="m9 18 6-6-6-6" />
-			</svg>
+			<ChevronRight class="size-4" />
 		</button>
 	</div>
 </div>
