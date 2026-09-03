@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import { HomeIcon } from '$lib/components/ui/icons';
+	import { Bell, ChevronRight, HomeIcon, LinkIcon, Menu, Plus } from '$lib/components/ui/icons';
 	import { ThemeToggle } from '$lib/components/ui/theme-toggle';
 
 	let { onmenuclick }: { onmenuclick?: () => void } = $props();
@@ -19,66 +19,23 @@
 				onclick={onmenuclick}
 				aria-label="Open menu"
 			>
-				<svg
-					class="size-5"
-					xmlns="http://www.w3.org/2000/svg"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="2"
-					stroke-linecap="round"
-					stroke-linejoin="round"
-				>
-					<line x1="4" x2="20" y1="12" y2="12" />
-					<line x1="4" x2="20" y1="6" y2="6" />
-					<line x1="4" x2="20" y1="18" y2="18" />
-				</svg>
+				<Menu class="size-5" />
 			</button>
 
 			<!-- Logo (mobile only, desktop uses breadcrumbs as context) -->
 			<a href={resolve('/')} class="flex items-center gap-2 md:hidden">
-				<svg
-					class="size-6 text-primary"
-					xmlns="http://www.w3.org/2000/svg"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="2"
-					stroke-linecap="round"
-					stroke-linejoin="round"
-				>
-					<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
-					<path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
-				</svg>
+				<LinkIcon class="size-6 text-primary" />
 				<span class="text-lg font-semibold tracking-tight">Linkflow</span>
 			</a>
 
 			<!-- Breadcrumbs (desktop only) -->
 			<div class="text-on-surface-variant font-body-sm hidden items-center gap-2 truncate md:flex">
 				<HomeIcon class="size-4 shrink-0" />
-				<svg
-					class="size-4 shrink-0"
-					xmlns="http://www.w3.org/2000/svg"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="2"
-					stroke-linecap="round"
-					stroke-linejoin="round"><polyline points="9 18 15 12 9 6" /></svg
-				>
+				<ChevronRight class="size-4 shrink-0" />
 				<span class="text-on-surface font-headline-md truncate text-body-base tracking-tight"
 					>Project Alpha</span
 				>
-				<svg
-					class="size-4 shrink-0"
-					xmlns="http://www.w3.org/2000/svg"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="2"
-					stroke-linecap="round"
-					stroke-linejoin="round"><polyline points="9 18 15 12 9 6" /></svg
-				>
+				<ChevronRight class="size-4 shrink-0" />
 				<span class="font-code-base truncate text-primary">/routes</span>
 			</div>
 		</div>
@@ -90,19 +47,7 @@
 				class="rounded-full p-2 transition-colors hover:bg-surface-container"
 				aria-label="Notifications"
 			>
-				<svg
-					class="text-on-surface-variant size-5"
-					xmlns="http://www.w3.org/2000/svg"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="2"
-					stroke-linecap="round"
-					stroke-linejoin="round"
-				>
-					<path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-					<path d="M13.73 21a2 2 0 0 1-3.46 0" />
-				</svg>
+				<Bell class="text-on-surface-variant size-5" />
 			</button>
 
 			<!-- Create Link button (desktop only) -->
@@ -110,19 +55,7 @@
 				class="font-label-caps hover:bg-primary-container hidden items-center gap-2 rounded-lg bg-primary px-4 py-2 text-label-caps text-primary-foreground shadow-sm transition-all md:flex"
 				aria-label="Create new link"
 			>
-				<svg
-					class="size-5"
-					xmlns="http://www.w3.org/2000/svg"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="2"
-					stroke-linecap="round"
-					stroke-linejoin="round"
-				>
-					<line x1="12" x2="12" y1="5" y2="19" />
-					<line x1="5" x2="19" y1="12" y2="12" />
-				</svg>
+				<Plus class="size-5" />
 				Create Link
 			</button>
 

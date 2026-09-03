@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
+	import { LinkIcon, X } from '$lib/components/ui/icons';
 	import { ThemeToggle } from '$lib/components/ui/theme-toggle';
 
 	let { open = false, onclose }: { open?: boolean; onclose?: () => void } = $props();
@@ -18,19 +19,7 @@
 	class="fixed top-0 left-0 z-50 hidden h-full w-60 flex-col border-r border-sidebar-border bg-sidebar md:flex"
 >
 	<div class="flex items-center gap-3 px-6 py-5">
-		<svg
-			class="size-7 text-sidebar-primary"
-			xmlns="http://www.w3.org/2000/svg"
-			viewBox="0 0 24 24"
-			fill="none"
-			stroke="currentColor"
-			stroke-width="2"
-			stroke-linecap="round"
-			stroke-linejoin="round"
-		>
-			<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
-			<path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
-		</svg>
+		<LinkIcon class="size-7 text-sidebar-primary" />
 		<span class="text-xl font-semibold tracking-tight text-sidebar-foreground">Linkflow</span>
 	</div>
 
@@ -98,19 +87,7 @@
 >
 	<div class="flex items-center justify-between px-6 py-5">
 		<div class="flex items-center gap-3">
-			<svg
-				class="size-7 text-sidebar-primary"
-				xmlns="http://www.w3.org/2000/svg"
-				viewBox="0 0 24 24"
-				fill="none"
-				stroke="currentColor"
-				stroke-width="2"
-				stroke-linecap="round"
-				stroke-linejoin="round"
-			>
-				<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
-				<path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
-			</svg>
+			<LinkIcon class="size-7 text-sidebar-primary" />
 			<span class="text-xl font-semibold tracking-tight text-sidebar-foreground">Linkflow</span>
 		</div>
 		<button
@@ -118,19 +95,7 @@
 			onclick={onclose}
 			aria-label="Close sidebar"
 		>
-			<svg
-				class="size-5"
-				xmlns="http://www.w3.org/2000/svg"
-				viewBox="0 0 24 24"
-				fill="none"
-				stroke="currentColor"
-				stroke-width="2"
-				stroke-linecap="round"
-				stroke-linejoin="round"
-			>
-				<path d="M18 6 6 18" />
-				<path d="m6 6 12 12" />
-			</svg>
+			<X class="size-5" />
 		</button>
 	</div>
 

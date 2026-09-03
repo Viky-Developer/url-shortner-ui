@@ -1,4 +1,5 @@
 <script lang="ts">
+	import AreaChartGraphic from './area-chart-graphic.svelte';
 	import { cn } from '$lib/utils.js';
 
 	type DataPoint = {
@@ -91,64 +92,16 @@
 
 <div class={cn('w-full', className)}>
 	<div class="relative" style="height: {height + 30}px">
-		<svg
-			class="h-full w-full overflow-visible"
-			preserveAspectRatio="none"
-			viewBox="0 0 {svgWidth} {svgHeight}"
-		>
-			<defs>
-				<linearGradient id="areaGradient" x1="0" x2="0" y1="0" y2="1">
-					<stop class="text-primary/20" offset="0%" stop-color="currentColor"></stop>
-					<stop class="text-primary/0" offset="100%" stop-color="currentColor"></stop>
-				</linearGradient>
-			</defs>
-
-			{#each gridLines as y, i (i)}
-				<line
-					class="text-outline-variant/30"
-					stroke="currentColor"
-					stroke-dasharray="4 4"
-					x1="0"
-					x2={svgWidth}
-					y1={y}
-					y2={y}
-				></line>
-			{/each}
-			<line
-				class="text-outline-variant/50"
-				stroke="currentColor"
-				x1="0"
-				x2={svgWidth}
-				y1={svgHeight - padding.bottom}
-				y2={svgHeight - padding.bottom}
-			></line>
-
-			{#if comparisonLine}
-				<path
-					class="text-primary/30"
-					d={comparisonLine}
-					fill="none"
-					stroke="currentColor"
-					stroke-dasharray="4 4"
-					stroke-width="2"
-				></path>
-			{/if}
-
-			{#if mainLine}
-				<path
-					class="text-primary drop-shadow-md"
-					d={mainLine}
-					fill="none"
-					stroke="currentColor"
-					stroke-width="3"
-				></path>
-				<path d={areaPath} fill="url(#areaGradient)"></path>
-			{/if}
-
-			{#each mainPoints as pt (pt.x)}
-				<circle class="text-primary" cx={pt.x} cy={pt.y} fill="currentColor" r="4"></circle>
-			{/each}
-		</svg>
+		<AreaChartGraphic
+			width={svgWidth}
+			height={svgHeight}
+			paddingBottom={padding.bottom}
+			{gridLines}
+			{comparisonLine}
+			{mainLine}
+			{areaPath}
+			{mainPoints}
+		/>
 
 		<div
 			class="text-on-surface-variant/60 absolute right-0 bottom-0 left-0 flex justify-between font-mono text-[10px]"

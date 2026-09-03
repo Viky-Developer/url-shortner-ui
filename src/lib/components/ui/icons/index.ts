@@ -1,2 +1,12 @@
+export { default as Bell } from '@lucide/svelte/icons/bell';
+export { default as Calendar } from '@lucide/svelte/icons/calendar';
+export { default as ChevronDown } from '@lucide/svelte/icons/chevron-down';
+export { default as ChevronLeft } from '@lucide/svelte/icons/chevron-left';
+export { default as ChevronRight } from '@lucide/svelte/icons/chevron-right';
+export { default as Menu } from '@lucide/svelte/icons/menu';
+export { default as Moon } from '@lucide/svelte/icons/moon';
+export { default as Plus } from '@lucide/svelte/icons/plus';
+export { default as Sun } from '@lucide/svelte/icons/sun';
+export { default as X } from '@lucide/svelte/icons/x';
 export { default as HomeIcon } from './HomeIcon.svelte';
 export { default as LinkIcon } from './LinkIcon.svelte';
