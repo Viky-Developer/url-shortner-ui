@@ -11,10 +11,10 @@
 >
 	<div class="flex w-full items-center justify-between px-4">
 		<!-- Left: Mobile hamburger + Desktop breadcrumbs + Logo -->
-		<div class="flex items-center gap-2 flex-1 min-w-0">
+		<div class="flex min-w-0 flex-1 items-center gap-2">
 			<!-- Mobile hamburger (hidden on desktop) -->
 			<button
-				class="md:hidden text-on-surface inline-flex size-9 items-center justify-center rounded-lg border border-border bg-surface-container transition-colors hover:bg-surface-container-high focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+				class="text-on-surface inline-flex size-9 items-center justify-center rounded-lg border border-border bg-surface-container transition-colors hover:bg-surface-container-high focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none md:hidden"
 				onclick={onmenuclick}
 				aria-label="Open menu"
 			>
@@ -35,7 +35,7 @@
 			</button>
 
 			<!-- Logo (mobile only, desktop uses breadcrumbs as context) -->
-			<a href={resolve('/')} class="md:hidden flex items-center gap-2">
+			<a href={resolve('/')} class="flex items-center gap-2 md:hidden">
 				<svg
 					class="size-6 text-primary"
 					xmlns="http://www.w3.org/2000/svg"
@@ -53,28 +53,84 @@
 			</a>
 
 			<!-- Breadcrumbs (desktop only) -->
-			<div class="hidden md:flex items-center gap-2 text-on-surface-variant font-body-sm truncate">
-				<svg class="size-4 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg>
-				<svg class="size-4 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
-				<span class="text-on-surface font-headline-md text-body-base tracking-tight truncate">Project Alpha</span>
-				<svg class="size-4 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
-				<span class="font-code-base text-primary truncate">/routes</span>
+			<div class="text-on-surface-variant font-body-sm hidden items-center gap-2 truncate md:flex">
+				<svg
+					class="size-4 shrink-0"
+					xmlns="http://www.w3.org/2000/svg"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline
+						points="9 22 9 12 15 12 15 22"
+					/></svg
+				>
+				<svg
+					class="size-4 shrink-0"
+					xmlns="http://www.w3.org/2000/svg"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+					stroke-linecap="round"
+					stroke-linejoin="round"><polyline points="9 18 15 12 9 6" /></svg
+				>
+				<span class="text-on-surface font-headline-md truncate text-body-base tracking-tight"
+					>Project Alpha</span
+				>
+				<svg
+					class="size-4 shrink-0"
+					xmlns="http://www.w3.org/2000/svg"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+					stroke-linecap="round"
+					stroke-linejoin="round"><polyline points="9 18 15 12 9 6" /></svg
+				>
+				<span class="font-code-base truncate text-primary">/routes</span>
 			</div>
 		</div>
 
 		<!-- Right: Notifications + Create Link + Theme Toggle -->
-		<div class="flex items-center gap-4 shrink-0">
+		<div class="flex shrink-0 items-center gap-4">
 			<!-- Notification bell -->
-			<button class="p-2 hover:bg-surface-container rounded-full transition-colors" aria-label="Notifications">
-				<svg class="size-5 text-on-surface-variant" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+			<button
+				class="rounded-full p-2 transition-colors hover:bg-surface-container"
+				aria-label="Notifications"
+			>
+				<svg
+					class="text-on-surface-variant size-5"
+					xmlns="http://www.w3.org/2000/svg"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+				>
 					<path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
 					<path d="M13.73 21a2 2 0 0 1-3.46 0" />
 				</svg>
 			</button>
 
 			<!-- Create Link button (desktop only) -->
-			<button class="hidden md:flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg font-label-caps text-label-caps hover:bg-primary-container transition-all shadow-sm" aria-label="Create new link">
-				<svg class="size-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+			<button
+				class="font-label-caps hover:bg-primary-container hidden items-center gap-2 rounded-lg bg-primary px-4 py-2 text-label-caps text-primary-foreground shadow-sm transition-all md:flex"
+				aria-label="Create new link"
+			>
+				<svg
+					class="size-5"
+					xmlns="http://www.w3.org/2000/svg"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+				>
 					<line x1="12" x2="12" y1="5" y2="19" />
 					<line x1="5" x2="19" y1="12" y2="12" />
 				</svg>
