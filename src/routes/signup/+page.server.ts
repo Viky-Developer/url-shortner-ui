@@ -1,5 +1,5 @@
-import { dev } from '$app/environment';
 import { AuthApiError, registerUser } from '$lib/server/auth';
+import { setAuthCookies } from '$lib/server/auth-cookies';
 import type { RegisterRequest } from '$lib/types/auth';
 import { fail } from '@sveltejs/kit';
 import type { Actions } from './$types';
@@ -67,15 +67,16 @@ export const actions = {
 
 		try {
 			const auth = await registerUser(fetch, payload);
-			const cookieOptions = {
-				path: '/',
-				httpOnly: true,
-				sameSite: 'lax' as const,
-				secure: !dev
-			};
-
-			if (auth.accessToken) cookies.set('access_token', auth.accessToken, cookieOptions);
-			if (auth.refreshToken) cookies.set('refresh_token', auth.refreshToken, cookieOptions);
+			if (!auth.token.accessToken || !auth.token.refreshToken) {
+				throw new AuthApiError(
+					'The registration response did not include authentication tokens.',
+					502
+				);
+			}
+			setAuthCookies(cookies, {
+				accessToken: auth.token.accessToken,
+				refreshToken: auth.token.refreshToken
+			});
 
 			return {
 				success: true,

@@ -1,7 +1,9 @@
 import { env } from '$env/dynamic/private';
-import type { AuthResponse, RegisterRequest, UserResponse } from '$lib/types/auth';
+import type { AuthResponse, AuthTokens, RegisterRequest, UserResponse } from '$lib/types/auth';
 
 const REGISTER_PATH = '/auth/register';
+const REFRESH_PATH = '/auth/refresh';
+const LOGOUT_PATH = '/auth/logout';
 
 export class AuthApiError extends Error {
 	constructor(
@@ -40,9 +42,20 @@ function isUserResponse(value: unknown): value is UserResponse {
 function isAuthResponse(value: unknown): value is AuthResponse {
 	return (
 		isRecord(value) &&
-		isNullableString(value.accessToken) &&
-		isNullableString(value.refreshToken) &&
+		isRecord(value.token) &&
+		isNullableString(value.token.accessToken) &&
+		isNullableString(value.token.refreshToken) &&
 		isUserResponse(value.user)
+	);
+}
+
+function isAuthTokens(value: unknown): value is AuthTokens {
+	return (
+		isRecord(value) &&
+		typeof value.accessToken === 'string' &&
+		value.accessToken.length > 0 &&
+		typeof value.refreshToken === 'string' &&
+		value.refreshToken.length > 0
 	);
 }
 
@@ -52,6 +65,14 @@ function extractAuthResponse(payload: unknown): AuthResponse | undefined {
 
 	const authResponse = payload.data[0];
 	return isAuthResponse(authResponse) ? authResponse : undefined;
+}
+
+function extractRefreshTokenResponse(payload: unknown): AuthTokens | undefined {
+	if (isAuthTokens(payload)) return payload;
+	if (!isRecord(payload) || !Array.isArray(payload.data)) return undefined;
+
+	const refreshResponse = payload.data[0];
+	return isAuthTokens(refreshResponse) ? refreshResponse : undefined;
 }
 
 function getErrorMessage(payload: unknown): string | undefined {
@@ -72,20 +93,7 @@ export async function registerUser(
 	fetcher: typeof globalThis.fetch,
 	request: RegisterRequest
 ): Promise<AuthResponse> {
-	const configuredBackendUrl = env.APP_ENV?.trim();
-	if (!configuredBackendUrl) {
-		throw new AuthApiError('The backend API URL is not configured.', 500);
-	}
-
-	let backendUrl: string;
-	try {
-		const parsedBackendUrl = new URL(configuredBackendUrl);
-		if (parsedBackendUrl.protocol !== 'http:' && parsedBackendUrl.protocol !== 'https:')
-			throw new Error();
-		backendUrl = parsedBackendUrl.href.replace(/\/$/, '');
-	} catch {
-		throw new AuthApiError('The backend API URL is invalid.', 500);
-	}
+	const backendUrl = getBackendUrl();
 
 	let response: Response;
 
@@ -127,4 +135,90 @@ export async function registerUser(
 	}
 
 	return authResponse;
+}
+
+export async function refreshAccessToken(
+	fetcher: typeof globalThis.fetch,
+	accessToken: string,
+	refreshToken: string
+): Promise<AuthTokens> {
+	const backendUrl = getBackendUrl();
+	let response: Response;
+
+	try {
+		response = await fetcher(`${backendUrl}${REFRESH_PATH}`, {
+			method: 'POST',
+			headers: {
+				accept: 'application/json',
+				authorization: `Bearer ${accessToken}`,
+				'content-type': 'application/json'
+			},
+			body: JSON.stringify({ refreshToken })
+		});
+	} catch {
+		throw new AuthApiError('The authentication service is unavailable.', 503);
+	}
+
+	let payload: unknown;
+	try {
+		payload = await response.json();
+	} catch {
+		throw new AuthApiError('The authentication service returned an invalid response.', 502);
+	}
+
+	if (!response.ok) {
+		throw new AuthApiError(
+			getErrorMessage(payload) || 'Unable to refresh the session.',
+			response.status
+		);
+	}
+
+	const refreshResponse = extractRefreshTokenResponse(payload);
+	if (!refreshResponse) {
+		throw new AuthApiError('The authentication service returned an invalid response.', 502);
+	}
+
+	return refreshResponse;
+}
+
+export async function logoutUser(
+	fetcher: typeof globalThis.fetch,
+	refreshToken: string
+): Promise<void> {
+	const backendUrl = getBackendUrl();
+	let response: Response;
+
+	try {
+		response = await fetcher(`${backendUrl}${LOGOUT_PATH}`, {
+			method: 'POST',
+			headers: {
+				accept: 'application/json',
+				'content-type': 'application/json'
+			},
+			body: JSON.stringify({ refreshToken })
+		});
+	} catch {
+		throw new AuthApiError('The logout service is unavailable.', 503);
+	}
+
+	if (!response.ok) {
+		throw new AuthApiError('Unable to sign out from the server.', response.status);
+	}
+}
+
+export function getBackendUrl(): string {
+	const configuredBackendUrl = env.APP_ENV?.trim();
+	if (!configuredBackendUrl) {
+		throw new AuthApiError('The backend API URL is not configured.', 500);
+	}
+
+	try {
+		const parsedBackendUrl = new URL(configuredBackendUrl);
+		if (parsedBackendUrl.protocol !== 'http:' && parsedBackendUrl.protocol !== 'https:') {
+			throw new Error();
+		}
+		return parsedBackendUrl.href.replace(/\/$/, '');
+	} catch {
+		throw new AuthApiError('The backend API URL is invalid.', 500);
+	}
 }

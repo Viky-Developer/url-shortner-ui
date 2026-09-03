@@ -3,8 +3,9 @@
 	import { page } from '$app/state';
 	import { Sidebar, TopBar } from '$lib/components/layout';
 	import { Toaster } from 'svelte-sonner';
+	import type { LayoutProps } from './$types';
 
-	let { children } = $props();
+	let { children, data }: LayoutProps = $props();
 	let sidebarOpen = $state(false);
 	const isAuthRoute = $derived(page.url.pathname === '/signup');
 </script>
@@ -13,7 +14,7 @@
 	{@render children()}
 {:else}
 	<TopBar onmenuclick={() => (sidebarOpen = true)} />
-	<Sidebar open={sidebarOpen} onclose={() => (sidebarOpen = false)} />
+	<Sidebar user={data.user} open={sidebarOpen} onclose={() => (sidebarOpen = false)} />
 
 	<main class="min-h-screen space-y-8 p-4 pt-4 md:ml-60 md:p-8">
 		{@render children()}
