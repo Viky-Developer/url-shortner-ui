@@ -1,6 +1,6 @@
 import { env } from '$env/dynamic/private';
 import { describe, expect, it, vi } from 'vitest';
-import { registerUser } from './auth';
+import { logoutUser, refreshAccessToken, registerUser } from './auth';
 
 describe('registerUser', () => {
 	it('posts registration data and returns the typed auth response', async () => {
@@ -12,8 +12,10 @@ describe('registerUser', () => {
 						message: 'user registered',
 						data: [
 							{
-								accessToken: 'access-token',
-								refreshToken: 'refresh-token',
+								token: {
+									accessToken: 'access-token',
+									refreshToken: 'refresh-token'
+								},
 								user: {
 									id: 'user-id',
 									email: 'user@example.com',
@@ -33,6 +35,10 @@ describe('registerUser', () => {
 		});
 
 		expect(result.user.id).toBe('user-id');
+		expect(result.token).toEqual({
+			accessToken: 'access-token',
+			refreshToken: 'refresh-token'
+		});
 		expect(fetchMock).toHaveBeenCalledWith(
 			`${env.APP_ENV}/auth/register`,
 			expect.objectContaining({
@@ -82,6 +88,93 @@ describe('registerUser', () => {
 			})
 		).rejects.toMatchObject({
 			status: 502
+		});
+	});
+});
+
+describe('refreshAccessToken', () => {
+	it('sends both tokens and unwraps the refreshed token response', async () => {
+		const fetchMock = vi.fn(
+			async () =>
+				new Response(
+					JSON.stringify({
+						statusCode: 200,
+						message: 'token refreshed',
+						data: [
+							{
+								accessToken: 'new-access-token',
+								refreshToken: 'refresh-token'
+							}
+						]
+					}),
+					{ status: 200, headers: { 'content-type': 'application/json' } }
+				)
+		);
+
+		const result = await refreshAccessToken(
+			fetchMock as typeof fetch,
+			'expired-access-token',
+			'refresh-token'
+		);
+
+		expect(result).toEqual({
+			accessToken: 'new-access-token',
+			refreshToken: 'refresh-token'
+		});
+		expect(fetchMock).toHaveBeenCalledWith(
+			`${env.APP_ENV}/auth/refresh`,
+			expect.objectContaining({
+				method: 'POST',
+				headers: expect.objectContaining({
+					authorization: 'Bearer expired-access-token'
+				}),
+				body: JSON.stringify({ refreshToken: 'refresh-token' })
+			})
+		);
+	});
+
+	it('rejects a malformed successful refresh response', async () => {
+		const fetchMock = vi.fn(
+			async () =>
+				new Response(JSON.stringify({ statusCode: 200, data: [{}] }), {
+					status: 200,
+					headers: { 'content-type': 'application/json' }
+				})
+		);
+
+		await expect(
+			refreshAccessToken(fetchMock as typeof fetch, 'access-token', 'refresh-token')
+		).rejects.toMatchObject({ status: 502 });
+	});
+});
+
+describe('logoutUser', () => {
+	it('posts the refresh token to the logout endpoint', async () => {
+		const fetchMock = vi.fn(async () => new Response(null, { status: 204 }));
+
+		await logoutUser(fetchMock as typeof fetch, 'refresh-token');
+
+		expect(fetchMock).toHaveBeenCalledWith(
+			`${env.APP_ENV}/auth/logout`,
+			expect.objectContaining({
+				method: 'POST',
+				headers: expect.objectContaining({
+					accept: 'application/json',
+					'content-type': 'application/json'
+				}),
+				body: JSON.stringify({ refreshToken: 'refresh-token' })
+			})
+		);
+	});
+
+	it('rejects an unsuccessful logout response', async () => {
+		const fetchMock = vi.fn(async () => new Response(null, { status: 401 }));
+
+		await expect(
+			logoutUser(fetchMock as typeof fetch, 'invalid-refresh-token')
+		).rejects.toMatchObject({
+			status: 401,
+			message: 'Unable to sign out from the server.'
 		});
 	});
 });

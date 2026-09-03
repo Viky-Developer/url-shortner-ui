@@ -17,9 +17,10 @@ test('submits registration only after Create Account is clicked', async ({ page 
 
 	const submitButton = page.getByRole('button', { name: 'Create Account' });
 	await expect(submitButton).toBeDisabled();
+	await expect(submitButton).toHaveCSS('cursor', 'not-allowed');
 
 	await page.getByLabel('Email').fill('user@example.com');
-	await page.getByLabel('Password', { exact: true }).fill(`Password1${'x'.repeat(47)}`);
+	await page.getByTestId('password-input').fill(`Password1${'x'.repeat(47)}`);
 
 	await expect(submitButton).toBeDisabled();
 	await expect(
@@ -27,7 +28,7 @@ test('submits registration only after Create Account is clicked', async ({ page 
 	).toBeVisible();
 	expect(submittedForm).toBeUndefined();
 
-	await page.getByLabel('Password', { exact: true }).fill('Password1');
+	await page.getByTestId('password-input').fill('Password1');
 
 	await expect(submitButton).toBeEnabled();
 	await expect(

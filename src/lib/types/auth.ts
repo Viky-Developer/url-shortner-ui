@@ -14,9 +14,25 @@ export interface UserResponse {
 }
 
 export interface AuthResponse {
+	token: RefreshTokenResponse;
+	user: UserResponse;
+}
+
+export interface RefreshTokenResponse {
 	accessToken: string | null;
 	refreshToken: string | null;
-	user: UserResponse;
+}
+
+export interface AuthTokens {
+	accessToken: string;
+	refreshToken: string;
+}
+
+export interface AuthenticatedUser {
+	id: string;
+	displayName: string;
+	email?: string;
+	role?: string;
 }
 
 export interface AuthResponseEnvelope {
