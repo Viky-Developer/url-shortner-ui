@@ -202,7 +202,7 @@
 					type="submit"
 					class="inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-md bg-primary px-6 text-sm font-semibold text-primary-foreground transition-all hover:-translate-y-0.5 hover:bg-primary/90 active:translate-y-0 active:scale-95 disabled:opacity-60"
 				>
-					<LinkIcon class="size-4" /> <span class="hidden md:inline">Shorten</span>
+					<LinkIcon class="size-4" />Shorten
 				</button>
 			</div>
 			<p class="text-xs text-muted-foreground">
