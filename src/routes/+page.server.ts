@@ -1,12 +1,4 @@
 import { redirect } from '@sveltejs/kit';
-import type { RequestEvent } from '@sveltejs/kit';
+import type { PageServerLoad } from './$types';
 
-export const load = ({ locals, url }: RequestEvent) => {
-	if (!locals.authenticated) {
-		const destination = `${url.pathname}${url.search}`;
-		if (destination === '/') return redirect(303, '/login');
-		return redirect(303, `/login?redirectTo=${encodeURIComponent(destination)}`);
-	}
-
-	return {};
-};
+export const load: PageServerLoad = () => redirect(303, '/dashboard');

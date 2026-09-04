@@ -89,7 +89,7 @@
 				submitted = result.type === 'success';
 				if (submitted) {
 					toast.success('Your account has been created successfully.', { id: toastId });
-					await goto(resolve('/'));
+					await goto(resolve('/dashboard'));
 					return;
 				}
 

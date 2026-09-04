@@ -80,7 +80,9 @@
 				submitted = result.type === 'success';
 				if (submitted && result.type === 'success') {
 					const redirectTo =
-						typeof result.data?.redirectTo === 'string' ? result.data.redirectTo : resolve('/');
+						typeof result.data?.redirectTo === 'string'
+							? result.data.redirectTo
+							: resolve('/dashboard');
 					toast.success('Signed in successfully.', { id: toastId });
 					window.location.assign(redirectTo);
 					return;
