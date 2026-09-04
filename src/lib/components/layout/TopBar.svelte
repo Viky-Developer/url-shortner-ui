@@ -1,14 +1,10 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { Bell, ChevronRight, HomeIcon, LinkIcon, Menu, Plus } from '$lib/components/ui/icons';
+	import { openCreateLink } from '$lib/state/create-link';
 	import { ThemeToggle } from '$lib/components/ui/theme-toggle';
 
 	let { onmenuclick }: { onmenuclick?: () => void } = $props();
-
-	function openCreateLink(): void {
-		void goto(resolve('/dashboard#create-link'), { noScroll: true, keepFocus: true });
-	}
 </script>
 
 <header

@@ -1,4 +1,10 @@
-import { createShortURL, listShortURLs, ShortURLApiError } from '$lib/server/short-urls';
+import {
+	createShortURL,
+	getURLStatusCounts,
+	listURLClicks,
+	listShortURLs,
+	ShortURLApiError
+} from '$lib/server/short-urls';
 import type { CreateURLRequest } from '$lib/types/short-url';
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
@@ -24,14 +30,28 @@ export const load: PageServerLoad = async ({ locals, url, fetch }) => {
 		return redirect(303, `/login?redirectTo=${encodeURIComponent(destination)}`);
 	}
 
-	try {
-		return { urls: await listShortURLs(fetch), loadError: undefined };
-	} catch (error) {
-		return {
-			urls: [],
-			loadError: error instanceof ShortURLApiError ? error.message : 'Unable to load your URLs.'
-		};
-	}
+	const [urlsResult, countsResult] = await Promise.allSettled([
+		listShortURLs(fetch),
+		getURLStatusCounts(fetch)
+	]);
+	const urls = urlsResult.status === 'fulfilled' ? urlsResult.value : [];
+	const clickResults = await Promise.allSettled(
+		urls.map((shortURL) => listURLClicks(fetch, shortURL.id, 1, 100))
+	);
+
+	return {
+		urls,
+		clickTimestamps: clickResults.flatMap((result) =>
+			result.status === 'fulfilled' ? result.value.clicks.map((click) => click.clickedAt) : []
+		),
+		statusCounts: countsResult.status === 'fulfilled' ? countsResult.value : undefined,
+		loadError:
+			urlsResult.status === 'rejected'
+				? urlsResult.reason instanceof ShortURLApiError
+					? urlsResult.reason.message
+					: 'Unable to load your URLs.'
+				: undefined
+	};
 };
 
 export const actions = {

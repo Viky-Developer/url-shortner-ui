@@ -1,7 +1,15 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
-	import { LinkIcon, LogOut, X } from '$lib/components/ui/icons';
+	import {
+		ChartNoAxesColumn,
+		LayoutDashboard,
+		LinkIcon,
+		LogOut,
+		Package,
+		Settings,
+		X
+	} from '$lib/components/ui/icons';
 	import { Popover, PopoverContent, PopoverTrigger } from '$lib/components/ui/popover';
 	import type { AuthenticatedUser } from '$lib/types/auth';
 	import { tick } from 'svelte';
@@ -24,12 +32,13 @@
 	}
 
 	const mainNav = [
-		{ href: resolve('/dashboard'), label: 'Dashboard', icon: '📊' },
-		{ href: resolve('/analytics'), label: 'Analytics', icon: '📈' },
-		{ href: resolve('/demo'), label: 'Demo', icon: '📦' }
+		{ href: resolve('/dashboard'), label: 'Dashboard', icon: LayoutDashboard },
+		{ href: resolve('/my-links'), label: 'My Links', icon: LinkIcon },
+		{ href: resolve('/analytics'), label: 'Analytics', icon: ChartNoAxesColumn },
+		{ href: resolve('/demo'), label: 'Demo', icon: Package }
 	];
 
-	const bottomNav = [{ href: resolve('/settings'), label: 'Settings', icon: '⚙️' }];
+	const bottomNav = [{ href: resolve('/settings'), label: 'Settings', icon: Settings }];
 
 	interface IndicatorPosition {
 		top: number;
@@ -179,7 +188,7 @@
 							: 'text-sidebar-foreground/70 hover:translate-x-0.5 hover:bg-sidebar-accent/70 hover:text-sidebar-foreground'
 					]}
 				>
-					<span class="text-xl">{link.icon}</span>
+					<link.icon class="size-5 shrink-0" />
 					<span>{link.label}</span>
 				</a>
 			{/each}
@@ -198,7 +207,7 @@
 						: 'text-sidebar-foreground/70 hover:translate-x-0.5 hover:bg-sidebar-accent/70 hover:text-sidebar-foreground'
 				]}
 			>
-				<span class="text-xl">{link.icon}</span>
+				<link.icon class="size-5 shrink-0" />
 				<span>{link.label}</span>
 			</a>
 		{/each}
@@ -271,7 +280,7 @@
 					]}
 					onclick={onclose}
 				>
-					<span class="text-xl">{link.icon}</span>
+					<link.icon class="size-5 shrink-0" />
 					<span>{link.label}</span>
 				</a>
 			{/each}
@@ -291,7 +300,7 @@
 				]}
 				onclick={onclose}
 			>
-				<span class="text-xl">{link.icon}</span>
+				<link.icon class="size-5 shrink-0" />
 				<span>{link.label}</span>
 			</a>
 		{/each}

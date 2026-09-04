@@ -1,14 +1,16 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { goto } from '$app/navigation';
-	import { resolve } from '$app/paths';
+	import { base, resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import { DatePicker } from '$lib/components/ui/datepicker';
+	import { Pagination } from '$lib/components/ui/pagination';
 	import { ArrowRight, CircleCheck, LinkIcon, LoaderCircle, X } from '$lib/components/ui/icons';
 	import { CalendarDate, getLocalTimeZone, today, type DateValue } from '@internationalized/date';
 	import { untrack } from 'svelte';
 	import { fade, scale } from 'svelte/transition';
 	import { toast } from 'svelte-sonner';
+	import type { ClickLogPage, ShortURL } from '$lib/types/short-url';
 	import type { PageProps, SubmitFunction } from './$types';
 	let { data, form }: PageProps = $props();
 	const initialForm = untrack(() => form);
@@ -16,6 +18,10 @@
 	let quickURL = $state('');
 	let quickPreview = $state('');
 	let quickURLError = $state('');
+	let clickURL = $state<ShortURL | undefined>();
+	let clickData = $state<ClickLogPage | undefined>();
+	let clickLoading = $state(false);
+	let clickError = $state('');
 	let originalURL = $state(initialForm?.values?.originalURL ?? '');
 	let originalURLError = $state('');
 	let expirationDate = $state<DateValue | undefined>(dateValue(initialForm?.values?.expiresAt));
@@ -24,7 +30,74 @@
 	const createOpen = $derived(page.url.hash === '#create-link');
 	const originalURLValid = $derived(validURL(originalURL));
 	const totalClicks = $derived(data.urls.reduce((total, url) => total + url.clicks, 0));
-	const activeLinks = $derived(data.urls.filter((url) => url.status === 'active').length);
+	const totalURLs = $derived(data.statusCounts?.all);
+	const activeLinks = $derived(data.statusCounts?.active);
+	const clickActivity = $derived.by(() => {
+		const now = new Date();
+		const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+		const days = Array.from({ length: 7 }, (_, offset) => {
+			const value = new Date(todayStart - (6 - offset) * 24 * 60 * 60 * 1000);
+			return {
+				key: `${value.getFullYear()}-${value.getMonth()}-${value.getDate()}`,
+				label: new Intl.DateTimeFormat('en', { weekday: 'short' }).format(value),
+				date: new Intl.DateTimeFormat('en', { dateStyle: 'medium' }).format(value),
+				count: 0
+			};
+		});
+		const byDay = new Map(days.map((day) => [day.key, day]));
+
+		for (const timestamp of data.clickTimestamps) {
+			const clickedAt = new Date(timestamp);
+			if (Number.isNaN(clickedAt.getTime())) continue;
+			const key = `${clickedAt.getFullYear()}-${clickedAt.getMonth()}-${clickedAt.getDate()}`;
+			const day = byDay.get(key);
+			if (day) day.count += 1;
+		}
+
+		return days;
+	});
+	const clickChart = $derived.by(() => {
+		const width = 600;
+		const baseline = 88;
+		const maximum = Math.max(...clickActivity.map((day) => day.count), 1);
+		const points = clickActivity.map((day, index) => ({
+			...day,
+			x: (index / Math.max(clickActivity.length - 1, 1)) * width,
+			y: baseline - (day.count / maximum) * 70
+		}));
+		const line = points.reduce((path, point, index) => {
+			if (index === 0) return `M ${point.x} ${point.y}`;
+			const previous = points[index - 1];
+			const controlX = (previous.x + point.x) / 2;
+			return `${path} C ${controlX} ${previous.y}, ${controlX} ${point.y}, ${point.x} ${point.y}`;
+		}, '');
+
+		return { points, line, area: `${line} L ${width} ${baseline} L 0 ${baseline} Z` };
+	});
+	const clickTrend = $derived.by(() => {
+		const now = new Date();
+		const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).getTime();
+		const currentStart = tomorrow - 7 * 24 * 60 * 60 * 1000;
+		const previousStart = currentStart - 7 * 24 * 60 * 60 * 1000;
+		let current = 0;
+		let previous = 0;
+
+		for (const timestamp of data.clickTimestamps) {
+			const clickedAt = Date.parse(timestamp);
+			if (Number.isNaN(clickedAt) || clickedAt >= tomorrow) continue;
+			if (clickedAt >= currentStart) current += 1;
+			else if (clickedAt >= previousStart) previous += 1;
+		}
+
+		const percentage =
+			previous === 0 ? (current > 0 ? 100 : 0) : ((current - previous) / previous) * 100;
+		return { percentage, increased: percentage >= 0 };
+	});
+	const recentURLs = $derived(
+		[...data.urls]
+			.sort((left, right) => Date.parse(right.createdAt ?? '') - Date.parse(left.createdAt ?? ''))
+			.slice(0, 5)
+	);
 	const number = (value: number) =>
 		new Intl.NumberFormat('en', {
 			notation: value >= 10_000 ? 'compact' : 'standard',
@@ -67,6 +140,28 @@
 			return false;
 		}
 	}
+	async function openClicks(url: ShortURL, requestedPage = 1): Promise<void> {
+		clickURL = url;
+		clickLoading = true;
+		clickError = '';
+		try {
+			const response = await fetch(
+				`${base}/dashboard/${encodeURIComponent(url.id)}/clicks?page=${requestedPage}`
+			);
+			const payload = await response.json();
+			if (!response.ok) throw new Error(payload.message || 'Unable to load URL clicks.');
+			clickData = payload as ClickLogPage;
+		} catch (error) {
+			clickError = error instanceof Error ? error.message : 'Unable to load URL clicks.';
+		} finally {
+			clickLoading = false;
+		}
+	}
+	function closeClicks(): void {
+		clickURL = undefined;
+		clickData = undefined;
+		clickError = '';
+	}
 	function previewShortURL(event: SubmitEvent): void {
 		event.preventDefault();
 		if (!validURL(quickURL)) {
@@ -79,7 +174,28 @@
 		quickPreview = `short.io/${crypto.randomUUID().replaceAll('-', '').slice(0, 10)}`;
 	}
 	function closeCreate(): void {
-		void goto(resolve('/dashboard'), { replaceState: true, noScroll: true, keepFocus: true });
+		const returnTo = page.url.searchParams.get('returnTo');
+		const navigationOptions = { replaceState: true, noScroll: true, keepFocus: true };
+		if (returnTo) {
+			const parsed = new URL(returnTo, page.url.origin);
+			const search = parsed.searchParams.toString();
+			switch (parsed.pathname) {
+				case '/my-links':
+					void goto(resolve(`/my-links?${search}`), navigationOptions);
+					return;
+				case '/analytics':
+					void goto(resolve(`/analytics?${search}`), navigationOptions);
+					return;
+				case '/settings':
+					void goto(resolve(`/settings?${search}`), navigationOptions);
+					return;
+				case '/demo':
+					void goto(resolve(`/demo?${search}`), navigationOptions);
+					return;
+			}
+		}
+
+		void goto(resolve('/dashboard'), navigationOptions);
 	}
 	const enhanceCreate: SubmitFunction = ({ formData, cancel }) => {
 		if (submitting) {
@@ -133,40 +249,81 @@
 
 <div class="mx-auto flex w-full max-w-7xl flex-col gap-6">
 	<section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3" aria-label="URL summary">
-		<article class="shadow-micro rounded-xl border border-border bg-card p-5">
+		<article class="shadow-micro h-44 rounded-xl border border-border bg-card p-5">
 			<p class="text-label-caps font-semibold tracking-wider text-muted-foreground uppercase">
 				Total URLs
 			</p>
-			<p class="mt-3 text-3xl font-semibold tracking-tight">{number(data.urls.length)}</p>
+			<p class="mt-3 text-3xl font-semibold tracking-tight">
+				{totalURLs === undefined ? '—' : number(totalURLs)}
+			</p>
 			<div class="mt-4 h-0.5 bg-muted"><div class="h-full w-2/3 bg-primary"></div></div>
 		</article>
-		<article class="shadow-micro rounded-xl border border-border bg-card p-5">
+		<article class="shadow-micro h-44 rounded-xl border border-border bg-card p-5">
 			<p class="text-label-caps font-semibold tracking-wider text-muted-foreground uppercase">
 				Total Clicks
 			</p>
-			<p class="mt-3 text-3xl font-semibold tracking-tight">{number(totalClicks)}</p>
-			<div class="mt-4 flex h-5 items-end gap-1" aria-hidden="true">
-				{#each [35, 55, 42, 75, 58, 90, 48, 70] as height (height)}<span
-						class="flex-1 rounded-t-sm bg-primary/60"
-						style:height={`${height}%`}
-					></span>{/each}
+			<div class="mt-3 flex items-baseline gap-3">
+				<p class="text-3xl font-semibold tracking-tight">{number(totalClicks)}</p>
+				<span
+					class={[
+						'text-sm font-medium',
+						clickTrend.increased ? 'text-success' : 'text-destructive'
+					]}
+					title="Compared with the previous seven days"
+				>
+					{clickTrend.increased ? '↑' : '↓'}
+					{Math.abs(clickTrend.percentage).toFixed(1)}%
+				</span>
 			</div>
+			<svg
+				class="mt-2 h-12 w-full overflow-visible"
+				viewBox="0 0 600 96"
+				preserveAspectRatio="none"
+				role="img"
+				aria-label="Clicks during the last seven days"
+			>
+				<defs>
+					<linearGradient id="click-area" x1="0" y1="0" x2="0" y2="1">
+						<stop offset="0%" stop-color="var(--primary)" stop-opacity="0.22" />
+						<stop offset="100%" stop-color="var(--primary)" stop-opacity="0.02" />
+					</linearGradient>
+				</defs>
+				<path d={clickChart.area} fill="url(#click-area)" />
+				<path
+					d={clickChart.line}
+					fill="none"
+					stroke="var(--primary)"
+					stroke-width="4"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					vector-effect="non-scaling-stroke"
+				/>
+				{#each clickChart.points as point (point.key)}
+					<circle cx={point.x} cy={point.y} r="8" fill="transparent">
+						<title>{point.date}: {point.count} {point.count === 1 ? 'click' : 'clicks'}</title>
+					</circle>
+				{/each}
+			</svg>
 		</article>
 		<article
-			class="shadow-micro rounded-xl border border-border bg-card p-5 sm:col-span-2 xl:col-span-1"
+			class="shadow-micro h-44 rounded-xl border border-border bg-card p-5 sm:col-span-2 xl:col-span-1"
 		>
 			<p class="text-label-caps font-semibold tracking-wider text-muted-foreground uppercase">
 				Active Links
 			</p>
 			<div class="mt-3 flex items-baseline gap-2">
-				<p class="text-3xl font-semibold tracking-tight">{number(activeLinks)}</p>
-				<p class="text-body-sm text-muted-foreground">/ {number(data.urls.length)}</p>
+				<p class="text-3xl font-semibold tracking-tight">
+					{activeLinks === undefined ? '—' : number(activeLinks)}
+				</p>
+				<p class="text-body-sm text-muted-foreground">
+					/ {totalURLs === undefined ? '—' : number(totalURLs)}
+				</p>
 			</div>
 			<div class="mt-4 flex gap-1" aria-hidden="true">
 				{#each [0, 1, 2, 3, 4] as segment (segment)}<span
 						class={[
 							'h-2 flex-1 first:rounded-l-full last:rounded-r-full',
-							segment < Math.ceil((activeLinks / Math.max(data.urls.length, 1)) * 5)
+							segment < Math.ceil(((activeLinks ?? 0) / Math.max(totalURLs ?? 0, 1)) * 5)
 								? 'bg-success'
 								: 'bg-muted'
 						]}
@@ -220,9 +377,10 @@
 	<section class="flex flex-col gap-4">
 		<div class="flex items-center justify-between">
 			<h2 class="text-2xl font-semibold tracking-tight">Recent URLs</h2>
-			<span
+			<a
+				href={resolve('/my-links')}
 				class="inline-flex items-center gap-1 text-label-caps font-semibold tracking-wide text-primary uppercase"
-				>View all <ArrowRight class="size-4" /></span
+				>View all <ArrowRight class="size-4" /></a
 			>
 		</div>
 		{#if data.loadError}
@@ -254,9 +412,7 @@
 						></thead
 					>
 					<tbody class="divide-y divide-border"
-						>{#each data.urls.slice(0, 5) as url (url.id)}<tr
-								class="transition-colors hover:bg-muted/35"
-							>
+						>{#each recentURLs as url (url.id)}<tr class="transition-colors hover:bg-muted/35">
 								<td class="max-w-82.5 px-5 py-4 text-left"
 									><p class="truncate font-medium">{url.title || 'Untitled link'}</p>
 									<p class="mt-1 truncate text-xs text-muted-foreground">{url.originalURL}</p></td
@@ -266,7 +422,15 @@
 										>{shortLabel(url.shortURL, url.shortCode)}</span
 									></td
 								>
-								<td class="px-5 py-4 text-center font-mono">{number(url.clicks)}</td>
+								<td class="px-5 py-4 text-center font-mono">
+									<button
+										type="button"
+										onclick={() => openClicks(url)}
+										class="rounded-md px-3 py-2 text-primary hover:bg-primary/10"
+										aria-label={`View ${url.clicks} clicks for ${url.title || url.shortCode}`}
+										>{number(url.clicks)}</button
+									>
+								</td>
 								<td class="px-5 py-4 text-center"
 									><span
 										class={[
@@ -301,6 +465,80 @@
 		{/if}
 	</section>
 </div>
+
+{#if clickURL}
+	<div
+		class="fixed inset-0 z-[80] grid place-items-center bg-black/50 p-4 backdrop-blur-sm"
+		role="presentation"
+		onclick={(event) => event.target === event.currentTarget && closeClicks()}
+	>
+		<div
+			role="dialog"
+			aria-modal="true"
+			aria-labelledby="click-history-title"
+			class="shadow-overlay relative max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-xl border border-border bg-card p-6"
+		>
+			<button
+				type="button"
+				onclick={closeClicks}
+				aria-label="Close click history"
+				class="absolute top-3 right-3 inline-flex size-10 items-center justify-center rounded-full text-muted-foreground hover:bg-muted"
+				><X class="size-5" /></button
+			>
+			<h2 id="click-history-title" class="pr-12 text-2xl font-semibold">Click history</h2>
+			<p class="mt-1 truncate text-sm text-muted-foreground">
+				{clickURL.title || clickURL.originalURL}
+			</p>
+			{#if clickLoading}
+				<div class="flex min-h-48 items-center justify-center gap-2 text-muted-foreground">
+					<LoaderCircle class="size-5 animate-spin" /> Loading clicks…
+				</div>
+			{:else if clickError}
+				<p role="alert" class="mt-6 rounded-md bg-destructive/10 p-4 text-sm text-destructive">
+					{clickError}
+				</p>
+			{:else if clickData}
+				<div class="mt-6 overflow-x-auto rounded-lg border border-border">
+					<table class="w-full min-w-[760px] text-sm">
+						<thead
+							><tr class="border-b border-border bg-muted/30"
+								><th scope="col" class="px-4 py-3 text-left">Clicked at</th><th
+									scope="col"
+									class="px-4 py-3 text-left">Browser</th
+								><th scope="col" class="px-4 py-3 text-left">Device</th><th
+									scope="col"
+									class="px-4 py-3 text-left">Referrer</th
+								><th scope="col" class="px-4 py-3 text-left">IP address</th></tr
+							></thead
+						>
+						<tbody class="divide-y divide-border"
+							>{#each clickData.clicks as click (click.id)}<tr
+									><td class="px-4 py-3">{date(click.clickedAt)}</td><td class="px-4 py-3"
+										>{click.browser}</td
+									><td class="px-4 py-3">{click.deviceType}</td><td
+										class="max-w-52 truncate px-4 py-3"
+										title={click.referrer}>{click.referrer}</td
+									><td class="px-4 py-3 font-mono text-xs">{click.ipAddress}</td></tr
+								>{/each}{#if clickData.clicks.length === 0}<tr
+									><td colspan="5" class="px-4 py-10 text-center text-muted-foreground"
+										>No click activity is available for this URL.</td
+									></tr
+								>{/if}</tbody
+						>
+					</table>
+				</div>
+				<div class="mt-4">
+					<Pagination
+						page={clickData.page}
+						totalItems={clickData.total}
+						itemsPerPage={clickData.perPage}
+						onpagechange={(nextPage) => openClicks(clickURL!, nextPage)}
+					/>
+				</div>
+			{/if}
+		</div>
+	</div>
+{/if}
 
 {#if createOpen}
 	<div
