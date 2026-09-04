@@ -4,7 +4,7 @@
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import { DatePicker } from '$lib/components/ui/datepicker';
-	import { ArrowRight, CircleCheck, LinkIcon, LoaderCircle } from '$lib/components/ui/icons';
+	import { ArrowRight, CircleCheck, LinkIcon, LoaderCircle, X } from '$lib/components/ui/icons';
 	import { CalendarDate, getLocalTimeZone, today, type DateValue } from '@internationalized/date';
 	import { untrack } from 'svelte';
 	import { fade, scale } from 'svelte/transition';
@@ -200,9 +200,9 @@
 				/>
 				<button
 					type="submit"
-					class="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-primary px-6 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-60"
+					class="inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-md bg-primary px-6 text-sm font-semibold text-primary-foreground transition-all hover:-translate-y-0.5 hover:bg-primary/90 active:translate-y-0 active:scale-95 disabled:opacity-60"
 				>
-					<LinkIcon class="size-4" /> Shorten
+					<LinkIcon class="size-4" /> <span class="hidden md:inline">Shorten</span>
 				</button>
 			</div>
 			<p class="text-xs text-muted-foreground">
@@ -315,8 +315,16 @@
 			role="dialog"
 			aria-modal="true"
 			aria-labelledby="create-link-title"
-			class="shadow-overlay max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-xl border border-border bg-card p-6 sm:p-8"
+			class="shadow-overlay relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-xl border border-border bg-card p-6 sm:p-8"
 		>
+			<button
+				type="button"
+				onclick={closeCreate}
+				aria-label="Close create link dialog"
+				class="absolute top-3 right-3 inline-flex size-10 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none sm:top-4 sm:right-4"
+			>
+				<X class="size-5" aria-hidden="true" />
+			</button>
 			<div class="mb-6">
 				<h2 id="create-link-title" class="text-2xl font-semibold tracking-tight">Create link</h2>
 				<p class="mt-1 text-sm text-muted-foreground">Add a shortened URL to your workspace.</p>

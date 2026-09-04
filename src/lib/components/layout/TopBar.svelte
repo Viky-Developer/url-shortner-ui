@@ -59,7 +59,7 @@
 			<button
 				type="button"
 				onclick={openCreateLink}
-				class="font-label-caps hover:bg-primary-container inline-flex size-9 items-center justify-center gap-2 rounded-lg bg-primary text-label-caps text-primary-foreground shadow-sm transition-all hover:-translate-y-0.5 active:translate-y-0 active:scale-95 md:h-auto md:w-auto md:px-4 md:py-2"
+				class="font-label-caps hover:bg-primary-container inline-flex size-9 cursor-pointer items-center justify-center gap-2 rounded-lg bg-primary text-label-caps text-primary-foreground shadow-sm transition-all hover:-translate-y-0.5 active:translate-y-0 active:scale-95 md:h-auto md:w-auto md:px-4 md:py-2"
 				aria-label="Create new link"
 			>
 				<Plus class="size-5" />
