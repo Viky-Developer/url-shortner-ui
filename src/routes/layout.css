@@ -4,6 +4,28 @@
 @import '@fontsource-variable/inter';
 @import '@fontsource/jetbrains-mono';
 
+@keyframes route-content-enter {
+	from {
+		opacity: 0;
+		transform: translateY(6px);
+	}
+
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+.route-content {
+	animation: route-content-enter 180ms ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.route-content {
+		animation: none;
+	}
+}
+
 @custom-variant dark (&:is(.dark *));
 
 :root {
@@ -285,5 +307,13 @@
 	}
 	html {
 		@apply font-sans;
+	}
+	button:not(:disabled),
+	[role='button']:not([aria-disabled='true']) {
+		cursor: pointer;
+	}
+	button:disabled,
+	[role='button'][aria-disabled='true'] {
+		cursor: not-allowed;
 	}
 }

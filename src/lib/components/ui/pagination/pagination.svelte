@@ -15,7 +15,7 @@
 	} = $props();
 
 	const totalPages = $derived(Math.max(1, Math.ceil(totalItems / itemsPerPage)));
-	const start = $derived((page - 1) * itemsPerPage + 1);
+	const start = $derived(totalItems === 0 ? 0 : (page - 1) * itemsPerPage + 1);
 	const end = $derived(Math.min(page * itemsPerPage, totalItems));
 
 	function setPage(p: number) {
@@ -49,12 +49,12 @@
 	}
 </script>
 
-<div class="flex items-center justify-between">
+<div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 	<span class="text-on-surface-variant text-sm">
 		Showing {start} to {end} of {totalItems.toLocaleString()} entries
 	</span>
 
-	<div class="flex gap-1">
+	<div class="flex flex-wrap gap-1" aria-label="Table pagination">
 		<button
 			class="text-on-surface-variant flex size-8 items-center justify-center rounded-md transition-colors hover:bg-surface-container disabled:opacity-50"
 			disabled={page <= 1}
@@ -69,6 +69,8 @@
 				<span class="text-on-surface-variant flex size-8 items-center justify-center">...</span>
 			{:else}
 				<button
+					aria-current={pg === page ? 'page' : undefined}
+					aria-label={`Page ${pg}`}
 					class={cn(
 						'flex size-8 items-center justify-center rounded-md text-sm transition-colors',
 						pg === page
