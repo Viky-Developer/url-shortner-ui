@@ -46,5 +46,5 @@ test('signs in through SSR and redirects to the requested protected route', asyn
 	expect(authCookies.every(({ httpOnly }) => httpOnly)).toBe(true);
 
 	await page.goto('/login');
-	await expect(page).toHaveURL('/');
+	await expect(page).toHaveURL('/dashboard');
 });

@@ -30,7 +30,7 @@ describe('short URL API', () => {
 				status: 'active'
 			})
 		]);
-		expect(fetcher).toHaveBeenCalledWith(`${env.APP_ENV}/shorten`, {
+		expect(fetcher).toHaveBeenCalledWith(`${env.APP_ENV}/urls?page=1&perPage=5`, {
 			headers: { accept: 'application/json' }
 		});
 	});

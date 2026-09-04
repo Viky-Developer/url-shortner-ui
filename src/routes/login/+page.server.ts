@@ -19,14 +19,15 @@ function readPassword(formData: FormData): string {
 
 function safeRedirectTarget(url: URL): string {
 	const requestedTarget = url.searchParams.get('redirectTo');
-	if (!requestedTarget) return '/';
+	if (!requestedTarget) return '/dashboard';
 
 	try {
 		const target = new URL(requestedTarget, url.origin);
-		if (target.origin !== url.origin || ['/login', '/signup'].includes(target.pathname)) return '/';
+		if (target.origin !== url.origin || ['/login', '/signup'].includes(target.pathname))
+			return '/dashboard';
 		return `${target.pathname}${target.search}${target.hash}`;
 	} catch {
-		return '/';
+		return '/dashboard';
 	}
 }
 

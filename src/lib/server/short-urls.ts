@@ -2,6 +2,7 @@ import type { CreateURLRequest, ShortURL } from '$lib/types/short-url';
 import { getBackendUrl } from './auth';
 
 const SHORTEN_PATH = '/shorten';
+const URLS_PATH = '/urls';
 
 export class ShortURLApiError extends Error {
 	constructor(
@@ -39,12 +40,13 @@ function normalizeShortURL(value: unknown, index: number): ShortURL | undefined 
 	if (!originalURL || !shortCode) return undefined;
 
 	const rawStatus = stringValue(value, 'status')?.toLowerCase();
+	const explicitlyInactive = value.isActive === false || value.is_active === false;
 	const expiresAt = stringValue(value, 'expiresAt', 'expires_at');
 	const expiredByDate = expiresAt ? Date.parse(expiresAt) <= Date.now() : false;
 	const status =
 		rawStatus === 'expired' || expiredByDate
 			? 'expired'
-			: rawStatus === 'inactive' || rawStatus === 'disabled'
+			: rawStatus === 'inactive' || rawStatus === 'disabled' || explicitlyInactive
 				? 'inactive'
 				: 'active';
 
@@ -106,7 +108,7 @@ function errorMessage(payload: unknown, fallback: string): string {
 export async function listShortURLs(fetcher: typeof fetch): Promise<ShortURL[]> {
 	let response: Response;
 	try {
-		response = await fetcher(`${getBackendUrl()}${SHORTEN_PATH}`, {
+		response = await fetcher(`${getBackendUrl()}${URLS_PATH}?page=1&perPage=5`, {
 			headers: { accept: 'application/json' }
 		});
 	} catch {

@@ -1,20 +1,30 @@
 <script lang="ts">
-	import { CalendarDate, type DateValue } from '@internationalized/date';
+	import { getLocalTimeZone, today, type DateValue } from '@internationalized/date';
 	import { Calendar } from '$lib/components/ui/calendar';
+	import { Calendar as CalendarIcon } from '$lib/components/ui/icons';
 	import { Popover, PopoverContent, PopoverTrigger } from '$lib/components/ui/popover';
 	import { Button } from '$lib/components/ui/button';
 	import { cn } from '$lib/utils.js';
 
 	let {
-		value = $bindable(new CalendarDate(2025, 1, 1)),
-		placeholder = $bindable(new CalendarDate(2025, 1, 1)),
+		value = $bindable<DateValue | undefined>(undefined),
+		placeholder = $bindable(today(getLocalTimeZone())),
+		minValue,
 		class: className,
 		...restProps
 	}: {
 		value?: DateValue;
 		placeholder?: DateValue;
+		minValue?: DateValue;
 		class?: string;
 	} = $props();
+	const selectableYears = $derived(
+		Array.from({ length: 5 }, (_, index) => (minValue?.year ?? placeholder.year) + index)
+	);
+
+	function displayDate(date: DateValue): string {
+		return `${String(date.day).padStart(2, '0')}-${String(date.month).padStart(2, '0')}-${date.year}`;
+	}
 </script>
 
 <Popover>
@@ -30,11 +40,20 @@
 				{...props}
 				{...restProps}
 			>
-				{value ? value.toString() : 'Pick a date'}
+				<CalendarIcon class="size-4 text-muted-foreground" />
+				{value ? displayDate(value) : 'DD-MM-YYYY'}
 			</Button>
 		{/snippet}
 	</PopoverTrigger>
 	<PopoverContent class="w-auto p-0">
-		<Calendar type="single" bind:value bind:placeholder />
+		<Calendar
+			type="single"
+			bind:value
+			bind:placeholder
+			{minValue}
+			captionLayout="dropdown"
+			monthFormat="short"
+			years={selectableYears}
+		/>
 	</PopoverContent>
 </Popover>

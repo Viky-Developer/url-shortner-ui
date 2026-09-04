@@ -1,9 +1,14 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { Bell, ChevronRight, HomeIcon, LinkIcon, Menu, Plus } from '$lib/components/ui/icons';
 	import { ThemeToggle } from '$lib/components/ui/theme-toggle';
 
 	let { onmenuclick }: { onmenuclick?: () => void } = $props();
+
+	function openCreateLink(): void {
+		void goto(resolve('/dashboard#create-link'), { noScroll: true, keepFocus: true });
+	}
 </script>
 
 <header
@@ -23,7 +28,7 @@
 			</button>
 
 			<!-- Logo (mobile only, desktop uses breadcrumbs as context) -->
-			<a href={resolve('/')} class="flex items-center gap-2 md:hidden">
+			<a href={resolve('/dashboard')} class="flex items-center gap-2 md:hidden">
 				<LinkIcon class="size-6 text-primary" />
 				<span class="text-lg font-semibold tracking-tight">Linkflow</span>
 			</a>
@@ -41,7 +46,7 @@
 		</div>
 
 		<!-- Right: Notifications + Create Link + Theme Toggle -->
-		<div class="flex shrink-0 items-center gap-4">
+		<div class="flex shrink-0 items-center gap-1 sm:gap-3 md:gap-4">
 			<!-- Notification bell -->
 			<button
 				class="rounded-full p-2 transition-colors hover:bg-surface-container"
@@ -50,13 +55,15 @@
 				<Bell class="text-on-surface-variant size-5" />
 			</button>
 
-			<!-- Create Link button (desktop only) -->
+			<!-- Create Link button: icon on mobile, label on desktop -->
 			<button
-				class="font-label-caps hover:bg-primary-container hidden items-center gap-2 rounded-lg bg-primary px-4 py-2 text-label-caps text-primary-foreground shadow-sm transition-all md:flex"
+				type="button"
+				onclick={openCreateLink}
+				class="font-label-caps hover:bg-primary-container inline-flex size-9 items-center justify-center gap-2 rounded-lg bg-primary text-label-caps text-primary-foreground shadow-sm transition-all hover:-translate-y-0.5 active:translate-y-0 active:scale-95 md:h-auto md:w-auto md:px-4 md:py-2"
 				aria-label="Create new link"
 			>
 				<Plus class="size-5" />
-				Create Link
+				<span class="hidden md:inline">Create Link</span>
 			</button>
 
 			<ThemeToggle />

@@ -24,7 +24,7 @@
 	}
 
 	const mainNav = [
-		{ href: resolve('/'), label: 'Dashboard', icon: '📊' },
+		{ href: resolve('/dashboard'), label: 'Dashboard', icon: '📊' },
 		{ href: resolve('/analytics'), label: 'Analytics', icon: '📈' },
 		{ href: resolve('/demo'), label: 'Demo', icon: '📦' }
 	];
@@ -43,7 +43,7 @@
 	let mobileIndicator = $state<IndicatorPosition>({ top: 0, height: 0, visible: false });
 
 	function isNavActive(href: string): boolean {
-		return href === '/'
+		return href === '/dashboard'
 			? page.url.pathname === href
 			: page.url.pathname === href || page.url.pathname.startsWith(`${href}/`);
 	}
@@ -148,7 +148,7 @@
 >
 	<div class="px-6 py-5">
 		<a
-			href={resolve('/')}
+			href={resolve('/dashboard')}
 			class="flex w-fit items-center gap-3 rounded-md focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar focus-visible:outline-none"
 			aria-label="Go to Dashboard"
 		>
@@ -231,7 +231,7 @@
 >
 	<div class="flex items-center justify-between px-6 py-5">
 		<a
-			href={resolve('/')}
+			href={resolve('/dashboard')}
 			class="flex items-center gap-3 rounded-md focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar focus-visible:outline-none"
 			onclick={onclose}
 			aria-label="Go to Dashboard"
