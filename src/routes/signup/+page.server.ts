@@ -1,4 +1,5 @@
 import { AuthApiError, registerUser } from '$lib/server/auth';
+import { verifyAccessToken } from '$lib/server/access-token';
 import { setAuthCookies } from '$lib/server/auth-cookies';
 import type { RegisterRequest } from '$lib/types/auth';
 import { fail } from '@sveltejs/kit';
@@ -72,6 +73,9 @@ export const actions = {
 					'The registration response did not include authentication tokens.',
 					502
 				);
+			}
+			if (!(await verifyAccessToken(auth.token.accessToken))) {
+				throw new AuthApiError('The registration response included an invalid access token.', 502);
 			}
 			setAuthCookies(cookies, {
 				accessToken: auth.token.accessToken,

@@ -1,7 +1,9 @@
+import { env } from '$env/dynamic/private';
 import type { Cookies } from '@sveltejs/kit';
 import { describe, expect, it, vi } from 'vitest';
 import {
 	ACCESS_TOKEN_COOKIE,
+	ACCESS_TOKEN_LIFETIME_SECONDS,
 	REFRESH_TOKEN_COOKIE,
 	REFRESH_TOKEN_LIFETIME_SECONDS,
 	clearAuthCookies,
@@ -19,6 +21,11 @@ function createCookies(): Cookies {
 }
 
 describe('authentication cookies', () => {
+	it('loads token lifetimes from the environment', () => {
+		expect(ACCESS_TOKEN_LIFETIME_SECONDS).toBe(Number(env.ACCESS_TOKEN_EXPIRY) * 60);
+		expect(REFRESH_TOKEN_LIFETIME_SECONDS).toBe(Number(env.REFRESH_TOKEN_EXPIRY) * 24 * 60 * 60);
+	});
+
 	it('stores both tokens securely for the seven-day refresh lifetime', () => {
 		const cookies = createCookies();
 
@@ -41,7 +48,7 @@ describe('authentication cookies', () => {
 		expect(cookies.set).toHaveBeenCalledWith(
 			REFRESH_TOKEN_COOKIE,
 			'refresh-token',
-			expect.objectContaining({ maxAge: 7 * 24 * 60 * 60 })
+			expect.objectContaining({ maxAge: REFRESH_TOKEN_LIFETIME_SECONDS })
 		);
 	});
 

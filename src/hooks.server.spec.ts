@@ -1,14 +1,37 @@
 import { env } from '$env/dynamic/private';
 import type { Cookies, Handle, HandleFetch, RequestEvent } from '@sveltejs/kit';
+import { createHmac } from 'node:crypto';
 import { describe, expect, it, vi } from 'vitest';
-import { ACCESS_TOKEN_COOKIE, REFRESH_TOKEN_COOKIE } from '$lib/server/auth-cookies';
+import {
+	ACCESS_TOKEN_COOKIE,
+	ACCESS_TOKEN_LIFETIME_SECONDS,
+	REFRESH_TOKEN_COOKIE
+} from '$lib/server/auth-cookies';
 import { handle, handleFetch } from './hooks.server';
+
+function testJwtSecret(): string {
+	if (!env.JWT_SECRET_KEY) throw new Error('JWT_SECRET_KEY must be configured for tests.');
+	return env.JWT_SECRET_KEY;
+}
 
 function createToken(iat: number, exp: number, claims: Record<string, unknown> = {}): string {
 	const encode = (value: Record<string, unknown>) =>
 		Buffer.from(JSON.stringify(value)).toString('base64url');
+	const userId = typeof claims.user_id === 'string' ? claims.user_id : 'user-id';
+	const header = encode({ alg: 'HS256', typ: 'JWT' });
+	const payload = encode({
+		sub: userId,
+		user_id: userId,
+		session_id: 17,
+		session_version: iat,
+		...claims,
+		iat,
+		exp
+	});
+	const unsignedToken = `${header}.${payload}`;
+	const signature = createHmac('sha256', testJwtSecret()).update(unsignedToken).digest('base64url');
 
-	return `${encode({ alg: 'HS256', typ: 'JWT' })}.${encode({ ...claims, iat, exp })}.signature`;
+	return `${unsignedToken}.${signature}`;
 }
 
 function createCookies(initial: Record<string, string> = {}) {
@@ -53,8 +76,8 @@ async function runHandle(event: RequestEvent, resolve = vi.fn(async () => new Re
 }
 
 describe('authentication middleware', () => {
-	it('allows public signup requests without tokens', async () => {
-		const { response, resolve } = await runHandle(createEvent('/signup'));
+	it.each(['/login', '/signup'])('allows public %s requests without tokens', async (pathname) => {
+		const { response, resolve } = await runHandle(createEvent(pathname));
 
 		expect(response.status).toBe(200);
 		expect(resolve).toHaveBeenCalledOnce();
@@ -62,7 +85,7 @@ describe('authentication middleware', () => {
 
 	it('allows a protected route with a usable access token', async () => {
 		const now = Math.floor(Date.now() / 1000);
-		const accessToken = createToken(now, now + 15 * 60, {
+		const accessToken = createToken(now, now + ACCESS_TOKEN_LIFETIME_SECONDS, {
 			user_id: 'user-id',
 			display_name: 'Alex Rivera',
 			email: 'alex@example.com'
@@ -73,6 +96,7 @@ describe('authentication middleware', () => {
 		const { response, resolve } = await runHandle(event);
 
 		expect(response.status).toBe(200);
+		expect(response.headers.get('cache-control')).toBe('private, no-store');
 		expect(resolve).toHaveBeenCalledOnce();
 		expect(event.locals).toMatchObject({
 			authenticated: true,
@@ -88,14 +112,14 @@ describe('authentication middleware', () => {
 	it('protects the dashboard when authentication is missing', async () => {
 		await expect(runHandle(createEvent('/'))).rejects.toMatchObject({
 			status: 303,
-			location: '/login?redirectTo=%2F'
+			location: '/login'
 		});
 	});
 
 	it('refreshes an expired access token before resolving a protected route', async () => {
 		const now = Math.floor(Date.now() / 1000);
-		const expiredAccessToken = createToken(now - 16 * 60, now - 60);
-		const newAccessToken = createToken(now, now + 15 * 60, {
+		const expiredAccessToken = createToken(now - ACCESS_TOKEN_LIFETIME_SECONDS - 60, now - 60);
+		const newAccessToken = createToken(now, now + ACCESS_TOKEN_LIFETIME_SECONDS, {
 			user_id: 'refreshed-user-id',
 			display_name: 'Refreshed User'
 		});
@@ -120,6 +144,7 @@ describe('authentication middleware', () => {
 		const { response, resolve } = await runHandle(event);
 
 		expect(response.status).toBe(200);
+		expect(response.headers.get('cache-control')).toBe('private, no-store');
 		expect(resolve).toHaveBeenCalledOnce();
 		expect(values.get(ACCESS_TOKEN_COOKIE)).toBe(newAccessToken);
 		expect(event.locals).toMatchObject({
@@ -138,6 +163,38 @@ describe('authentication middleware', () => {
 				})
 			})
 		);
+	});
+
+	it('rejects a refreshed access token with an invalid signature', async () => {
+		const now = Math.floor(Date.now() / 1000);
+		const expiredAccessToken = createToken(now - ACCESS_TOKEN_LIFETIME_SECONDS - 60, now - 60);
+		const validNewAccessToken = createToken(now, now + ACCESS_TOKEN_LIFETIME_SECONDS);
+		const [header, payload] = validNewAccessToken.split('.');
+		const { cookies } = createCookies({
+			[ACCESS_TOKEN_COOKIE]: expiredAccessToken,
+			[REFRESH_TOKEN_COOKIE]: 'refresh-token'
+		});
+		const fetcher = vi.fn(async () =>
+			Response.json({
+				statusCode: 200,
+				message: 'token refreshed',
+				data: [
+					{
+						accessToken: `${header}.${payload}.invalid-signature`,
+						refreshToken: 'refresh-token'
+					}
+				]
+			})
+		) as unknown as typeof fetch;
+		const event = createEvent('/analytics', { cookies, fetcher });
+		const resolve = vi.fn(async () => new Response('ok'));
+
+		await expect(runHandle(event, resolve)).rejects.toMatchObject({
+			status: 303,
+			location: '/login?redirectTo=%2Fanalytics'
+		});
+		expect(resolve).not.toHaveBeenCalled();
+		expect(cookies.delete).toHaveBeenCalledTimes(2);
 	});
 
 	it('clears an invalid session and redirects browser navigation to login', async () => {

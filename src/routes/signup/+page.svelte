@@ -345,7 +345,7 @@
 				Already have an account?
 				<a
 					class="border-b border-transparent font-medium text-primary transition-colors hover:border-primary hover:text-primary/90"
-					href={resolve('/#signin')}
+					href={resolve('/login')}
 				>
 					Sign in
 				</a>

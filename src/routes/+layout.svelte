@@ -7,7 +7,7 @@
 
 	let { children, data }: LayoutProps = $props();
 	let sidebarOpen = $state(false);
-	const isAuthRoute = $derived(page.url.pathname === '/signup');
+	const isAuthRoute = $derived(['/login', '/signup'].includes(page.url.pathname));
 </script>
 
 {#if isAuthRoute}

@@ -1,6 +1,10 @@
 import type { Handle, HandleFetch, RequestEvent } from '@sveltejs/kit';
 import { redirect } from '@sveltejs/kit';
-import { isAccessTokenUsable, readAccessTokenUser } from '$lib/server/access-token';
+import {
+	accessTokenUserFromClaims,
+	verifyAccessToken,
+	type AccessTokenClaims
+} from '$lib/server/access-token';
 import { getBackendUrl, refreshAccessToken } from '$lib/server/auth';
 import {
 	ACCESS_TOKEN_COOKIE,
@@ -37,33 +41,34 @@ function unauthorizedResponse(event: RequestEvent): Response {
 	}
 
 	const destination = `${event.url.pathname}${event.url.search}`;
+	if (destination === '/') return redirect(303, LOGIN_PATH);
 	return redirect(303, `${LOGIN_PATH}?redirectTo=${encodeURIComponent(destination)}`);
 }
 
-function setAuthenticatedLocals(event: RequestEvent, accessToken: string): void {
+function setAuthenticatedLocals(
+	event: RequestEvent,
+	accessToken: string,
+	claims: AccessTokenClaims
+): void {
 	event.locals.authenticated = true;
 	event.locals.accessToken = accessToken;
-	const user = readAccessTokenUser(accessToken);
-	if (user) {
-		(
-			event.locals as RequestEvent['locals'] & { user?: ReturnType<typeof readAccessTokenUser> }
-		).user = user;
-	}
+	event.locals.user = accessTokenUserFromClaims(claims);
 }
 
 export const handle: Handle = async ({ event, resolve }) => {
 	event.locals.authenticated = false;
 	delete event.locals.accessToken;
-	delete (
-		event.locals as RequestEvent['locals'] & { user?: ReturnType<typeof readAccessTokenUser> }
-	).user;
+	delete event.locals.user;
 
 	const accessToken = event.cookies.get(ACCESS_TOKEN_COOKIE);
 	const refreshToken = event.cookies.get(REFRESH_TOKEN_COOKIE);
 
-	if (accessToken && isAccessTokenUsable(accessToken)) {
-		setAuthenticatedLocals(event, accessToken);
-		return resolve(event);
+	const verifiedClaims = accessToken ? await verifyAccessToken(accessToken) : undefined;
+	if (accessToken && verifiedClaims) {
+		setAuthenticatedLocals(event, accessToken, verifiedClaims);
+		const response = await resolve(event);
+		response.headers.set('cache-control', 'private, no-store');
+		return response;
 	}
 
 	if (isPublicPath(event.url.pathname) || event.route.id === null) {
@@ -77,9 +82,13 @@ export const handle: Handle = async ({ event, resolve }) => {
 
 	try {
 		const tokens = await refreshAccessToken(event.fetch, accessToken, refreshToken);
+		const refreshedClaims = await verifyAccessToken(tokens.accessToken);
+		if (!refreshedClaims) throw new Error('The refreshed access token is invalid.');
 		setAuthCookies(event.cookies, tokens);
-		setAuthenticatedLocals(event, tokens.accessToken);
-		return resolve(event);
+		setAuthenticatedLocals(event, tokens.accessToken, refreshedClaims);
+		const response = await resolve(event);
+		response.headers.set('cache-control', 'private, no-store');
+		return response;
 	} catch {
 		clearAuthCookies(event.cookies);
 		return unauthorizedResponse(event);
