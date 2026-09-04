@@ -185,7 +185,7 @@
 		>
 			<h1 class="text-2xl font-semibold tracking-tight">Quick Shorten</h1>
 			<div
-				class="shadow-micro flex w-full flex-col gap-2 rounded-lg bg-background p-1 focus-within:ring-2 focus-within:ring-ring sm:flex-row"
+				class="shadow-micro flex w-full flex-col gap-2 rounded-lg border border-input bg-background p-1 transition-shadow has-[input:focus-visible]:ring-2 has-[input:focus-visible]:ring-ring/40 sm:flex-row"
 			>
 				<label for="quickURL" class="sr-only">Long URL to preview</label>
 				<input
