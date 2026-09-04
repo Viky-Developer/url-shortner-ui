@@ -9,6 +9,11 @@ import {
 } from '$lib/server/auth-cookies';
 import { handle, handleFetch } from './hooks.server';
 
+function testJwtSecret(): string {
+	if (!env.JWT_SECRET_KEY) throw new Error('JWT_SECRET_KEY must be configured for tests.');
+	return env.JWT_SECRET_KEY;
+}
+
 function createToken(iat: number, exp: number, claims: Record<string, unknown> = {}): string {
 	const encode = (value: Record<string, unknown>) =>
 		Buffer.from(JSON.stringify(value)).toString('base64url');
@@ -24,9 +29,7 @@ function createToken(iat: number, exp: number, claims: Record<string, unknown> =
 		exp
 	});
 	const unsignedToken = `${header}.${payload}`;
-	const signature = createHmac('sha256', env.JWT_SECRET_KEY)
-		.update(unsignedToken)
-		.digest('base64url');
+	const signature = createHmac('sha256', testJwtSecret()).update(unsignedToken).digest('base64url');
 
 	return `${unsignedToken}.${signature}`;
 }

@@ -6,9 +6,10 @@ import type { Cookies } from '@sveltejs/kit';
 export const ACCESS_TOKEN_COOKIE = 'access_token';
 export const REFRESH_TOKEN_COOKIE = 'refresh_token';
 
-function requiredPositiveInteger(name: string): number {
+function positiveInteger(name: string, defaultValue: number): number {
 	const value = env[name]?.trim();
-	if (!value || !/^\d+$/.test(value)) {
+	if (!value) return defaultValue;
+	if (!/^\d+$/.test(value)) {
 		throw new Error(`${name} must be configured as a positive integer.`);
 	}
 
@@ -20,9 +21,9 @@ function requiredPositiveInteger(name: string): number {
 	return parsed;
 }
 
-export const ACCESS_TOKEN_LIFETIME_SECONDS = requiredPositiveInteger('ACCESS_TOKEN_EXPIRY') * 60;
+export const ACCESS_TOKEN_LIFETIME_SECONDS = positiveInteger('ACCESS_TOKEN_EXPIRY', 15) * 60;
 export const REFRESH_TOKEN_LIFETIME_SECONDS =
-	requiredPositiveInteger('REFRESH_TOKEN_EXPIRY') * 24 * 60 * 60;
+	positiveInteger('REFRESH_TOKEN_EXPIRY', 7) * 24 * 60 * 60;
 
 const baseCookieOptions = {
 	path: '/',

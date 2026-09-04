@@ -8,6 +8,11 @@ const ISSUED_AT = 1_000;
 const EXPIRES_AT = ISSUED_AT + ACCESS_TOKEN_LIFETIME_SECONDS;
 const VALID_NOW = EXPIRES_AT - 100;
 
+function testJwtSecret(): string {
+	if (!env.JWT_SECRET_KEY) throw new Error('JWT_SECRET_KEY must be configured for tests.');
+	return env.JWT_SECRET_KEY;
+}
+
 function createToken(
 	claims: Record<string, unknown>,
 	options: { algorithm?: string; secret?: string } = {}
@@ -23,7 +28,7 @@ function createToken(
 		...claims
 	});
 	const unsignedToken = `${header}.${payload}`;
-	const signature = createHmac('sha256', options.secret ?? env.JWT_SECRET_KEY)
+	const signature = createHmac('sha256', options.secret ?? testJwtSecret())
 		.update(unsignedToken)
 		.digest('base64url');
 
