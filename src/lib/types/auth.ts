@@ -4,6 +4,12 @@ export interface RegisterRequest {
 	displayName?: string;
 }
 
+export interface LoginRequest {
+	email: string;
+	password: string;
+	revokeSessionId?: number;
+}
+
 export interface UserResponse {
 	id: string | null;
 	email: string | null;

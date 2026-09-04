@@ -1,6 +1,29 @@
 import { env } from '$env/dynamic/private';
 import { describe, expect, it, vi } from 'vitest';
-import { logoutUser, refreshAccessToken, registerUser } from './auth';
+import { loginUser, logoutUser, refreshAccessToken, registerUser } from './auth';
+
+function successfulAuthResponse(): Response {
+	return new Response(
+		JSON.stringify({
+			statusCode: 200,
+			message: 'authenticated',
+			data: [
+				{
+					token: {
+						accessToken: 'access-token',
+						refreshToken: 'refresh-token'
+					},
+					user: {
+						id: 'user-id',
+						email: 'user@example.com',
+						displayName: 'Jane'
+					}
+				}
+			]
+		}),
+		{ status: 200, headers: { 'content-type': 'application/json' } }
+	);
+}
 
 describe('registerUser', () => {
 	it('posts registration data and returns the typed auth response', async () => {
@@ -89,6 +112,66 @@ describe('registerUser', () => {
 		).rejects.toMatchObject({
 			status: 502
 		});
+	});
+});
+
+describe('loginUser', () => {
+	it('posts existing credentials and returns the auth response', async () => {
+		const fetchMock = vi.fn(async () => successfulAuthResponse());
+
+		const result = await loginUser(fetchMock as typeof fetch, {
+			email: 'user@example.com',
+			password: 'existing-password'
+		});
+
+		expect(result.token).toEqual({
+			accessToken: 'access-token',
+			refreshToken: 'refresh-token'
+		});
+		expect(fetchMock).toHaveBeenCalledWith(
+			`${env.APP_ENV}/auth/login`,
+			expect.objectContaining({
+				method: 'POST',
+				body: JSON.stringify({
+					email: 'user@example.com',
+					password: 'existing-password'
+				})
+			})
+		);
+	});
+
+	it('includes a requested session ID to revoke', async () => {
+		const fetchMock = vi.fn(async () => successfulAuthResponse());
+
+		await loginUser(fetchMock as typeof fetch, {
+			email: 'user@example.com',
+			password: 'existing-password',
+			revokeSessionId: 17
+		});
+
+		expect(fetchMock).toHaveBeenCalledWith(
+			`${env.APP_ENV}/auth/login`,
+			expect.objectContaining({
+				body: JSON.stringify({
+					email: 'user@example.com',
+					password: 'existing-password',
+					revokeSessionId: 17
+				})
+			})
+		);
+	});
+
+	it('preserves the response status for invalid credentials', async () => {
+		const fetchMock = vi.fn(async () =>
+			Response.json({ message: 'invalid credentials' }, { status: 401 })
+		);
+
+		await expect(
+			loginUser(fetchMock as typeof fetch, {
+				email: 'user@example.com',
+				password: 'wrong-password'
+			})
+		).rejects.toMatchObject({ status: 401 });
 	});
 });
 

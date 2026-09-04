@@ -1,7 +1,14 @@
 import { env } from '$env/dynamic/private';
-import type { AuthResponse, AuthTokens, RegisterRequest, UserResponse } from '$lib/types/auth';
+import type {
+	AuthResponse,
+	AuthTokens,
+	LoginRequest,
+	RegisterRequest,
+	UserResponse
+} from '$lib/types/auth';
 
 const REGISTER_PATH = '/auth/register';
+const LOGIN_PATH = '/auth/login';
 const REFRESH_PATH = '/auth/refresh';
 const LOGOUT_PATH = '/auth/logout';
 
@@ -132,6 +139,50 @@ export async function registerUser(
 	const authResponse = extractAuthResponse(payload);
 	if (!authResponse) {
 		throw new AuthApiError('The registration service returned an invalid response.', 502);
+	}
+
+	return authResponse;
+}
+
+export async function loginUser(
+	fetcher: typeof globalThis.fetch,
+	request: LoginRequest
+): Promise<AuthResponse> {
+	const backendUrl = getBackendUrl();
+	let response: Response;
+
+	try {
+		response = await fetcher(`${backendUrl}${LOGIN_PATH}`, {
+			method: 'POST',
+			headers: {
+				accept: 'application/json',
+				'content-type': 'application/json'
+			},
+			body: JSON.stringify(request)
+		});
+	} catch {
+		throw new AuthApiError('The sign-in service is unavailable. Please try again.', 503);
+	}
+
+	let payload: unknown;
+	try {
+		payload = await response.json();
+	} catch {
+		throw new AuthApiError(
+			response.ok
+				? 'The sign-in service returned an invalid response.'
+				: 'Unable to sign in. Please try again.',
+			response.ok ? 502 : response.status
+		);
+	}
+
+	if (!response.ok) {
+		throw new AuthApiError(getErrorMessage(payload) || 'Unable to sign in.', response.status);
+	}
+
+	const authResponse = extractAuthResponse(payload);
+	if (!authResponse) {
+		throw new AuthApiError('The sign-in service returned an invalid response.', 502);
 	}
 
 	return authResponse;

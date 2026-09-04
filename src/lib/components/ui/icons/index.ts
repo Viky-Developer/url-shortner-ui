@@ -10,6 +10,7 @@ export { default as Eye } from '@lucide/svelte/icons/eye';
 export { default as EyeOff } from '@lucide/svelte/icons/eye-off';
 export { default as IdCard } from '@lucide/svelte/icons/id-card';
 export { default as LoaderCircle } from '@lucide/svelte/icons/loader-circle';
+export { default as LogIn } from '@lucide/svelte/icons/log-in';
 export { default as LogOut } from '@lucide/svelte/icons/log-out';
 export { default as LockKeyhole } from '@lucide/svelte/icons/lock-keyhole';
 export { default as Mail } from '@lucide/svelte/icons/mail';

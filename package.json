@@ -58,6 +58,7 @@
 		"vitest-browser-svelte": "^2.1.1"
 	},
 	"dependencies": {
+		"jose": "^6.2.10",
 		"svelte-sonner": "^1.2.1"
 	}
 }
