@@ -48,9 +48,9 @@
 				{pageTitle}
 			</p>
 
-			<h1 class="hidden truncate text-2xl font-semibold tracking-tight text-foreground md:block">
+			<p class="hidden truncate text-2xl font-semibold tracking-tight text-foreground md:block">
 				{pageTitle}
-			</h1>
+			</p>
 		</div>
 
 		<!-- Right: Create Link + Theme Toggle -->
