@@ -11,11 +11,13 @@
 		data = [],
 		comparisonData = [],
 		height = 240,
+		showPoints = true,
 		class: className
 	}: {
 		data: DataPoint[];
 		comparisonData?: DataPoint[];
 		height?: number;
+		showPoints?: boolean | 'sparse';
 		class?: string;
 	} = $props();
 
@@ -24,7 +26,7 @@
 	const svgHeight = $derived(height);
 
 	const allValues = $derived([...data.map((d) => d.value), ...comparisonData.map((d) => d.value)]);
-	const maxVal = $derived(Math.max(...allValues, 1));
+	const maxVal = $derived(Math.max(...allValues, 1) * 1.2);
 	const chartHeight = $derived(svgHeight - padding.top - padding.bottom);
 
 	function yScale(val: number): number {
@@ -74,19 +76,22 @@
 
 	const gridLines = $derived([0, 0.25, 0.5, 0.75, 1].map((frac) => yScale(frac * maxVal)));
 
-	const xLabels = $derived(
-		data.filter((_, i) => {
-			if (data.length <= 5) return true;
-			const step = Math.ceil(data.length / 5);
-			return i % step === 0 || i === data.length - 1;
+	const xLabelPositions = $derived(
+		Array.from({ length: Math.min(data.length, 5) }, (_, i) => {
+			const index = Math.round((i * (data.length - 1)) / Math.max(Math.min(data.length, 5) - 1, 1));
+			return { label: data[index].label, x: xScale(index, data.length) };
 		})
 	);
-
-	const xLabelPositions = $derived(
-		xLabels.map((d) => {
-			const origIdx = data.indexOf(d);
-			return { label: d.label, x: xScale(origIdx, data.length) };
-		})
+	const visiblePoints = $derived(
+		showPoints === 'sparse'
+			? mainPoints.filter(
+					(_, i) =>
+						i === mainPoints.length - 1 ||
+						(i > 0 && i % Math.max(1, Math.round(mainPoints.length / 3)) === 0)
+				)
+			: showPoints || mainPoints.length === 1
+				? mainPoints
+				: []
 	);
 </script>
 
@@ -100,14 +105,19 @@
 			{comparisonLine}
 			{mainLine}
 			{areaPath}
-			{mainPoints}
+			mainPoints={visiblePoints}
 		/>
 
 		<div
-			class="text-on-surface-variant/60 absolute right-0 bottom-0 left-0 flex justify-between font-mono text-[10px]"
+			class="text-on-surface-variant absolute right-0 bottom-0 left-0 flex justify-between font-mono text-[10px]"
 		>
-			{#each xLabelPositions as xl (xl.label)}
-				<span>{xl.label}</span>
+			{#each xLabelPositions as xl, i (i)}
+				<span
+					class="absolute"
+					style:left={`${(xl.x / svgWidth) * 100}%`}
+					style:transform={`translateX(${i === 0 ? 0 : i === xLabelPositions.length - 1 ? -100 : -50}%)`}
+					>{xl.label}</span
+				>
 			{/each}
 		</div>
 	</div>

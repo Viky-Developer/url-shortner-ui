@@ -6,11 +6,13 @@
 		page = $bindable(1),
 		totalItems = 0,
 		itemsPerPage = 5,
+		loading = false,
 		onpagechange
 	}: {
 		page?: number;
 		totalItems?: number;
 		itemsPerPage?: number;
+		loading?: boolean;
 		onpagechange?: (page: number) => void;
 	} = $props();
 
@@ -19,7 +21,7 @@
 	const end = $derived(Math.min(page * itemsPerPage, totalItems));
 
 	function setPage(p: number) {
-		if (p < 1 || p > totalPages || p === page) return;
+		if (loading || p < 1 || p > totalPages || p === page) return;
 		onpagechange?.(p);
 	}
 
@@ -49,15 +51,16 @@
 	}
 </script>
 
-<div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+<div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between" aria-busy={loading}>
 	<span class="text-on-surface-variant text-sm">
-		Showing {start} to {end} of {totalItems.toLocaleString()} entries
+		{#if loading}<span role="status">Loading page…</span>{:else}Showing {start} to {end} of {totalItems.toLocaleString()}
+			entries{/if}
 	</span>
 
 	<div class="flex flex-wrap gap-1" aria-label="Table pagination">
 		<button
 			class="text-on-surface-variant flex size-8 items-center justify-center rounded-md transition-colors hover:bg-surface-container disabled:opacity-50"
-			disabled={page <= 1}
+			disabled={loading || page <= 1}
 			onclick={() => setPage(page - 1)}
 			aria-label="Previous page"
 		>
@@ -69,6 +72,7 @@
 				<span class="text-on-surface-variant flex size-8 items-center justify-center">...</span>
 			{:else}
 				<button
+					disabled={loading}
 					aria-current={pg === page ? 'page' : undefined}
 					aria-label={`Page ${pg}`}
 					class={cn(
@@ -86,7 +90,7 @@
 
 		<button
 			class="text-on-surface-variant flex size-8 items-center justify-center rounded-md transition-colors hover:bg-surface-container disabled:opacity-50"
-			disabled={page >= totalPages}
+			disabled={loading || page >= totalPages}
 			onclick={() => setPage(page + 1)}
 			aria-label="Next page"
 		>

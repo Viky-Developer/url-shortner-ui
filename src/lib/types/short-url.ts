@@ -47,6 +47,7 @@ export interface URLStatusCounts {
 }
 
 export interface ClickLog {
+	shortCode?: string;
 	id: string;
 	clickedAt: string;
 	ipAddress: string;

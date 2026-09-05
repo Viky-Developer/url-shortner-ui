@@ -1,7 +1,7 @@
 import {
 	createShortURL,
 	getURLStatusCounts,
-	listURLClicks,
+	getClickCounts,
 	listShortURLs,
 	ShortURLApiError
 } from '$lib/server/short-urls';
@@ -30,20 +30,17 @@ export const load: PageServerLoad = async ({ locals, url, fetch }) => {
 		return redirect(303, `/login?redirectTo=${encodeURIComponent(destination)}`);
 	}
 
-	const [urlsResult, countsResult] = await Promise.allSettled([
+	const [urlsResult, countsResult, clicksResult] = await Promise.allSettled([
 		listShortURLs(fetch),
-		getURLStatusCounts(fetch)
+		getURLStatusCounts(fetch),
+		getClickCounts(fetch)
 	]);
 	const urls = urlsResult.status === 'fulfilled' ? urlsResult.value : [];
-	const clickResults = await Promise.allSettled(
-		urls.map((shortURL) => listURLClicks(fetch, shortURL.id, 1, 100))
-	);
 
 	return {
 		urls,
-		clickTimestamps: clickResults.flatMap((result) =>
-			result.status === 'fulfilled' ? result.value.clicks.map((click) => click.clickedAt) : []
-		),
+		clickCounts: clicksResult.status === 'fulfilled' ? clicksResult.value : null,
+		clickCountsError: clicksResult.status === 'rejected' ? 'Unable to load total clicks.' : '',
 		statusCounts: countsResult.status === 'fulfilled' ? countsResult.value : undefined,
 		loadError:
 			urlsResult.status === 'rejected'

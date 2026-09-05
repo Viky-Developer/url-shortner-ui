@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { base, resolve } from '$app/paths';
-	import { goto, invalidateAll } from '$app/navigation';
+	import { goto } from '$app/navigation';
+	import { navigating } from '$app/state';
+	import { enhance } from '$app/forms';
 	import { DatePicker } from '$lib/components/ui/datepicker';
 	import { Pagination } from '$lib/components/ui/pagination';
 	import {
@@ -9,12 +11,10 @@
 		LinkIcon,
 		LoaderCircle,
 		Pencil,
-		Plus,
 		Trash2,
 		X
 	} from '$lib/components/ui/icons';
 	import type { ShortURL, URLStatusCode } from '$lib/types/short-url';
-	import { openCreateLink } from '$lib/state/create-link';
 	import { CalendarDate, getLocalTimeZone, today, type DateValue } from '@internationalized/date';
 	import { fade, scale } from 'svelte/transition';
 	import { toast } from 'svelte-sonner';
@@ -228,7 +228,7 @@
 				id: toastId
 			});
 			deleteTarget = undefined;
-			await invalidateAll();
+			// await invalidateAll();
 		} catch (error) {
 			deleteError = error instanceof Error ? error.message : 'Unable to delete this URL.';
 			toast.error(deleteError, { id: toastId });
@@ -243,7 +243,7 @@
 		modalError = '';
 		try {
 			const url = new URL(values.originalURL);
-			if (!['http:', 'https:'].includes(url.protocol)) throw new Error();
+			if (!['https:'].includes(url.protocol)) throw new Error();
 		} catch {
 			modalError = 'Enter a valid URL beginning with http:// or https://';
 			return;
@@ -251,42 +251,43 @@
 		modalStep = 'preview';
 	}
 
-	async function updateURL(): Promise<void> {
-		if (!selected || saving) return;
-		const selectedId = selected.id;
-		saving = true;
-		modalError = '';
-		const toastId = toast.loading('Updating your link…');
-		try {
-			const response = await fetch(`${base}/my-links/${encodeURIComponent(selected.id)}`, {
-				method: 'PATCH',
-				headers: { 'content-type': 'application/json' },
-				body: JSON.stringify({
-					originalURL: values.originalURL.trim(),
-					title: values.title.trim(),
-					description: values.description.trim(),
-					status: values.status,
-					...(expirationISOString() ? { expiresAt: expirationISOString() } : {})
-				})
-			});
-			const payload: unknown = await response.json();
-			if (!response.ok) throw new Error(responseMessage(payload, 'Unable to update this URL.'));
-			statusOverrides = { ...statusOverrides, [selectedId]: values.status };
-			toast.success('Link updated successfully.', { id: toastId });
-			selected = undefined;
-			await invalidateAll();
-		} catch (error) {
-			modalError = error instanceof Error ? error.message : 'Unable to update this URL.';
-			toast.error(modalError, { id: toastId });
-		} finally {
-			saving = false;
-		}
-	}
+	// async function updateURL(): Promise<void> {
+	// 	if (!selected || saving) return;
+	// 	const selectedId = selected.id;
+	// 	saving = true;
+	// 	modalError = '';
+	// 	const toastId = toast.loading('Updating your link…');
+	// 	try {
+	// 		const response = await fetch(`${base}/my-links/${encodeURIComponent(selected.id)}`, {
+	// 			method: 'PATCH',
+	// 			headers: { 'content-type': 'application/json' },
+	// 			body: JSON.stringify({
+	// 				originalURL: values.originalURL.trim(),
+	// 				title: values.title.trim(),
+	// 				description: values.description.trim(),
+	// 				status: values.status,
+	// 				...(expirationISOString() ? { expiresAt: expirationISOString() } : {})
+	// 			})
+	// 		});
+	// 		const payload: unknown = await response.json();
+	// 		if (!response.ok) throw new Error(responseMessage(payload, 'Unable to update this URL.'));
+	// 		statusOverrides = { ...statusOverrides, [selectedId]: values.status };
+	// 		toast.success('Link updated successfully.', { id: toastId });
+	// 		selected = undefined;
+	// 		// await invalidateAll();
+	// 	} catch (error) {
+	// 		modalError = error instanceof Error ? error.message : 'Unable to update this URL.';
+	// 		toast.error(modalError, { id: toastId });
+	// 	} finally {
+	// 		saving = false;
+	// 	}
+	// }
 
 	function changePage(page: number): void {
 		const status = statusQuery(filter);
 		void goto(resolve(`/my-links?page=${page}${status}`), {
-			noScroll: true
+			noScroll: true,
+			keepFocus: true
 		});
 	}
 
@@ -315,20 +316,6 @@
 />
 
 <div class="mx-auto flex w-full max-w-7xl flex-col gap-6">
-	<header class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-		<div>
-			<h1 class="text-3xl font-semibold tracking-tight">URL List</h1>
-			<p class="mt-1 text-sm text-muted-foreground">Manage and track your shortened URLs.</p>
-		</div>
-		<button
-			type="button"
-			onclick={openCreateLink}
-			class="inline-flex h-10 w-fit items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-sm transition-all hover:-translate-y-0.5 hover:bg-primary/90"
-		>
-			<Plus class="size-4" /> Create New URL
-		</button>
-	</header>
-
 	<section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-5" aria-label="URL totals">
 		{#each [{ label: 'All URLs', value: data.counts.all, tone: 'bg-primary' }, { label: 'Active', value: data.counts.active, tone: 'bg-success' }, { label: 'Disabled', value: data.counts.disabled, tone: 'bg-muted-foreground' }, { label: 'Expired', value: data.counts.expired, tone: 'bg-warning' }, { label: 'Deleted', value: data.counts.deleted, tone: 'bg-destructive' }] as card (card.label)}
 			<article class="shadow-micro rounded-xl border border-border bg-card p-5">
@@ -443,7 +430,14 @@
 										{url.description || 'No description'}
 									</p>
 								</td>
-								<td class="px-5 py-4 text-center font-mono">{url.clicks.toLocaleString()}</td>
+								<td class="px-5 py-4 text-center font-mono"
+									><a
+										class="text-primary underline-offset-4 hover:underline"
+										href={resolve('/analytics')}
+										aria-label={`View analytics for ${url.title || url.shortCode}`}
+										>{url.clicks.toLocaleString()}</a
+									></td
+								>
 								<td class="px-5 py-4 text-center">
 									<span
 										class={[
@@ -458,6 +452,11 @@
 								</td>
 								<td class="px-5 py-4 text-right">
 									<div class="flex justify-end gap-2">
+										<a
+											href={resolve('/analytics')}
+											class="inline-flex h-9 items-center rounded-md border border-border px-3 font-medium text-primary hover:bg-muted"
+											>Analytics</a
+										>
 										<button
 											type="button"
 											disabled={['expired', 'deleted'].includes(statusFor(url))}
@@ -503,6 +502,7 @@
 			</div>
 			<div class="border-t border-border p-4">
 				<Pagination
+					loading={navigating.to?.url.pathname === resolve('/my-links')}
 					page={data.page}
 					totalItems={data.total}
 					itemsPerPage={data.perPage}
@@ -649,7 +649,42 @@
 					</div>
 				</form>
 			{:else}
-				<div class="grid gap-5">
+				<form
+					method="POST"
+					action="?/update"
+					use:enhance={() => {
+						saving = true;
+						modalError = '';
+						const toastId = toast.loading('Updating your link…');
+						const selectedId = selected!.id;
+						const savedStatus = values.status;
+						return async ({ result, update }) => {
+							if (result.type === 'success') {
+								statusOverrides = { ...statusOverrides, [selectedId]: savedStatus };
+								toast.success('Link updated successfully.', { id: toastId });
+								selected = undefined;
+								await update();
+							} else {
+								const message =
+									result.type === 'failure' && typeof result.data?.message === 'string'
+										? result.data.message
+										: 'Unable to update this URL.';
+								modalError = message;
+								toast.error(message, { id: toastId });
+							}
+							saving = false;
+						};
+					}}
+					class="grid gap-5"
+				>
+					<input type="hidden" name="id" value={selected?.id} />
+					<input type="hidden" name="originalURL" value={values.originalURL.trim()} />
+					<input type="hidden" name="title" value={values.title.trim()} />
+					<input type="hidden" name="description" value={values.description.trim()} />
+					<input type="hidden" name="status" value={values.status} />
+					{#if expirationISOString()}
+						<input type="hidden" name="expiresAt" value={expirationISOString()} />
+					{/if}
 					<dl class="grid gap-4 rounded-lg border border-border bg-muted/20 p-4 sm:grid-cols-2">
 						<div class="sm:col-span-2">
 							<dt class="text-xs font-medium text-muted-foreground uppercase">Original URL</dt>
@@ -688,15 +723,14 @@
 							>Back to edit</button
 						>
 						<button
-							type="button"
+							type="submit"
 							disabled={saving}
-							onclick={updateURL}
 							class="inline-flex h-10 cursor-pointer items-center justify-center gap-2 rounded-md bg-primary px-5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
 						>
 							{#if saving}<LoaderCircle class="size-4 animate-spin" />{/if} Confirm update
 						</button>
 					</div>
-				</div>
+				</form>
 			{/if}
 		</div>
 	</div>
@@ -705,7 +739,7 @@
 {#if deleteTarget}
 	<div
 		transition:fade={{ duration: 160 }}
-		class="fixed inset-0 z-[80] grid place-items-center bg-black/55 p-4 backdrop-blur-sm"
+		class="fixed inset-0 z-80 grid place-items-center bg-black/55 p-4 backdrop-blur-sm"
 		role="presentation"
 		onclick={(event) => event.target === event.currentTarget && closeDelete()}
 	>
