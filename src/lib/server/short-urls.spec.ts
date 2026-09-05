@@ -2,12 +2,14 @@ import { env } from '$env/dynamic/private';
 import { describe, expect, it, vi } from 'vitest';
 import {
 	createShortURL,
+	getClickCounts,
 	getShortURL,
 	getURLStatusCounts,
 	hardDeleteShortURL,
 	listShortURLPage,
 	listShortURLs,
 	listURLClicks,
+	listAllURLClicks,
 	ShortURLApiError,
 	softDeleteShortURL,
 	updateShortURL
@@ -194,5 +196,56 @@ describe('short URL API', () => {
 				status: 409
 			})
 		);
+	});
+});
+
+describe('dashboard click counts', () => {
+	it('loads the aggregate total and daily series from the counts endpoint', async () => {
+		const counts = { days: 7, total: 500, items: [{ date: '2026-09-05', clicks: 500 }] };
+		const fetcher = vi.fn<typeof fetch>().mockResolvedValue(Response.json({ data: [counts] }));
+		await expect(getClickCounts(fetcher)).resolves.toEqual(counts);
+		expect(fetcher).toHaveBeenCalledWith(`${env.APP_ENV}/urls/clicks/counts`, {
+			headers: { accept: 'application/json' }
+		});
+	});
+	it('does not turn malformed counts into a zero total', async () => {
+		const fetcher = vi
+			.fn<typeof fetch>()
+			.mockResolvedValue(Response.json({ data: [{ total: '500' }] }));
+		await expect(getClickCounts(fetcher)).rejects.toMatchObject({ status: 502 });
+	});
+	it('preserves API failures', async () => {
+		const fetcher = vi
+			.fn<typeof fetch>()
+			.mockResolvedValue(Response.json({ message: 'Unavailable' }, { status: 503 }));
+		await expect(getClickCounts(fetcher)).rejects.toMatchObject({ status: 503 });
+	});
+});
+
+it('loads all-link click logs and pagination from the account endpoint', async () => {
+	const fetcher = vi.fn<typeof fetch>().mockResolvedValue(
+		Response.json({
+			data: [
+				{
+					id: 7,
+					urlId: 42,
+					shortCode: 'launch',
+					clickedAt: '2026-09-05T12:00:00Z',
+					ipAddress: '127.0.0.1',
+					browser: 'Firefox',
+					deviceType: 'Desktop'
+				}
+			],
+			pagination: { page: 2, perPage: 10, total: 21 }
+		})
+	);
+	expect(await listAllURLClicks(fetcher, 2, 10)).toMatchObject({
+		page: 2,
+		perPage: 10,
+		total: 21,
+		clicks: [{ id: '7', shortCode: 'launch', browser: 'Firefox' }]
+	});
+	expect(fetcher).toHaveBeenCalledWith(`${env.APP_ENV}/urls/clicks?page=2&perPage=10`, {
+		headers: { accept: 'application/json' }
 	});
 });

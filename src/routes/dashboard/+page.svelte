@@ -29,33 +29,19 @@
 	const minimumExpirationDate = today(getLocalTimeZone());
 	const createOpen = $derived(page.url.hash === '#create-link');
 	const originalURLValid = $derived(validURL(originalURL));
-	const totalClicks = $derived(data.urls.reduce((total, url) => total + url.clicks, 0));
+	const totalClicks = $derived(data.clickCounts?.total);
 	const totalURLs = $derived(data.statusCounts?.all);
 	const activeLinks = $derived(data.statusCounts?.active);
-	const clickActivity = $derived.by(() => {
-		const now = new Date();
-		const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-		const days = Array.from({ length: 7 }, (_, offset) => {
-			const value = new Date(todayStart - (6 - offset) * 24 * 60 * 60 * 1000);
-			return {
-				key: `${value.getFullYear()}-${value.getMonth()}-${value.getDate()}`,
-				label: new Intl.DateTimeFormat('en', { weekday: 'short' }).format(value),
-				date: new Intl.DateTimeFormat('en', { dateStyle: 'medium' }).format(value),
-				count: 0
-			};
-		});
-		const byDay = new Map(days.map((day) => [day.key, day]));
-
-		for (const timestamp of data.clickTimestamps) {
-			const clickedAt = new Date(timestamp);
-			if (Number.isNaN(clickedAt.getTime())) continue;
-			const key = `${clickedAt.getFullYear()}-${clickedAt.getMonth()}-${clickedAt.getDate()}`;
-			const day = byDay.get(key);
-			if (day) day.count += 1;
-		}
-
-		return days;
-	});
+	const clickActivity = $derived(
+		(data.clickCounts?.items ?? []).map((day) => ({
+			key: day.date,
+			label: new Intl.DateTimeFormat('en', { weekday: 'short', timeZone: 'UTC' }).format(
+				new Date(day.date)
+			),
+			date: day.date,
+			count: day.clicks
+		}))
+	);
 	const clickChart = $derived.by(() => {
 		const width = 600;
 		const baseline = 88;
@@ -73,25 +59,6 @@
 		}, '');
 
 		return { points, line, area: `${line} L ${width} ${baseline} L 0 ${baseline} Z` };
-	});
-	const clickTrend = $derived.by(() => {
-		const now = new Date();
-		const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).getTime();
-		const currentStart = tomorrow - 7 * 24 * 60 * 60 * 1000;
-		const previousStart = currentStart - 7 * 24 * 60 * 60 * 1000;
-		let current = 0;
-		let previous = 0;
-
-		for (const timestamp of data.clickTimestamps) {
-			const clickedAt = Date.parse(timestamp);
-			if (Number.isNaN(clickedAt) || clickedAt >= tomorrow) continue;
-			if (clickedAt >= currentStart) current += 1;
-			else if (clickedAt >= previousStart) previous += 1;
-		}
-
-		const percentage =
-			previous === 0 ? (current > 0 ? 100 : 0) : ((current - previous) / previous) * 100;
-		return { percentage, increased: percentage >= 0 };
 	});
 	const recentURLs = $derived(
 		[...data.urls]
@@ -263,47 +230,44 @@
 				Total Clicks
 			</p>
 			<div class="mt-3 flex items-baseline gap-3">
-				<p class="text-3xl font-semibold tracking-tight">{number(totalClicks)}</p>
-				<span
-					class={[
-						'text-sm font-medium',
-						clickTrend.increased ? 'text-success' : 'text-destructive'
-					]}
-					title="Compared with the previous seven days"
-				>
-					{clickTrend.increased ? '↑' : '↓'}
-					{Math.abs(clickTrend.percentage).toFixed(1)}%
-				</span>
+				<p class="text-3xl font-semibold tracking-tight">
+					{totalClicks === undefined ? '—' : number(totalClicks)}
+				</p>
 			</div>
-			<svg
-				class="mt-2 h-12 w-full overflow-visible"
-				viewBox="0 0 600 96"
-				preserveAspectRatio="none"
-				role="img"
-				aria-label="Clicks during the last seven days"
-			>
-				<defs>
-					<linearGradient id="click-area" x1="0" y1="0" x2="0" y2="1">
-						<stop offset="0%" stop-color="var(--primary)" stop-opacity="0.22" />
-						<stop offset="100%" stop-color="var(--primary)" stop-opacity="0.02" />
-					</linearGradient>
-				</defs>
-				<path d={clickChart.area} fill="url(#click-area)" />
-				<path
-					d={clickChart.line}
-					fill="none"
-					stroke="var(--primary)"
-					stroke-width="4"
-					stroke-linecap="round"
-					stroke-linejoin="round"
-					vector-effect="non-scaling-stroke"
-				/>
-				{#each clickChart.points as point (point.key)}
-					<circle cx={point.x} cy={point.y} r="8" fill="transparent">
-						<title>{point.date}: {point.count} {point.count === 1 ? 'click' : 'clicks'}</title>
-					</circle>
-				{/each}
-			</svg>
+			{#if data.clickCounts}
+				<svg
+					class="mt-2 h-12 w-full overflow-visible"
+					viewBox="0 0 600 96"
+					preserveAspectRatio="none"
+					role="img"
+					aria-label="Clicks during the last seven days"
+				>
+					<defs>
+						<linearGradient id="click-area" x1="0" y1="0" x2="0" y2="1">
+							<stop offset="0%" stop-color="var(--primary)" stop-opacity="0.22" />
+							<stop offset="100%" stop-color="var(--primary)" stop-opacity="0.02" />
+						</linearGradient>
+					</defs>
+					<path d={clickChart.area} fill="url(#click-area)" />
+					<path
+						d={clickChart.line}
+						fill="none"
+						stroke="var(--primary)"
+						stroke-width="4"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						vector-effect="non-scaling-stroke"
+					/>
+					{#each clickChart.points as point (point.key)}
+						<circle cx={point.x} cy={point.y} r="8" fill="transparent">
+							<title>{point.date}: {point.count} {point.count === 1 ? 'click' : 'clicks'}</title>
+						</circle>
+					{/each}
+				</svg>
+				<p class="text-xs text-muted-foreground">
+					Last {data.clickCounts.days} days · all links
+				</p>
+			{:else}<p role="alert" class="mt-4 text-sm text-destructive">{data.clickCountsError}</p>{/if}
 		</article>
 		<article
 			class="shadow-micro h-44 rounded-xl border border-border bg-card p-5 sm:col-span-2 xl:col-span-1"

@@ -17,8 +17,14 @@
 	let {
 		user,
 		open = false,
+		desktopOpen = true,
 		onclose
-	}: { user?: AuthenticatedUser; open?: boolean; onclose?: () => void } = $props();
+	}: {
+		user?: AuthenticatedUser;
+		open?: boolean;
+		desktopOpen?: boolean;
+		onclose?: () => void;
+	} = $props();
 
 	const userName = $derived(user?.displayName || 'User');
 	const userInitial = $derived(userName.charAt(0).toUpperCase());
@@ -153,7 +159,10 @@
 
 <!-- Desktop sidebar -->
 <aside
-	class="fixed top-0 left-0 z-50 hidden h-full w-60 flex-col border-r border-sidebar-border bg-sidebar md:flex"
+	class="fixed top-0 left-0 z-50 hidden h-full w-60 flex-col border-r border-sidebar-border bg-sidebar transition-transform duration-200 ease-in-out md:flex"
+	class:-translate-x-full={!desktopOpen}
+	class:translate-x-0={desktopOpen}
+	aria-hidden={!desktopOpen}
 >
 	<div class="px-6 py-5">
 		<a

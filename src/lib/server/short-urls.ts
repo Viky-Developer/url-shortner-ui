@@ -212,12 +212,35 @@ export async function listURLClicks(
 	page = 1,
 	perPage = 7
 ): Promise<ClickLogPage> {
+	return fetchClickLogPage(fetcher, `${URLS_PATH}/${encodeURIComponent(id)}/clicks`, page, perPage);
+}
+
+export function listAllURLClicks(
+	fetcher: typeof fetch,
+	page = 1,
+	perPage = 10,
+	range?: { from: string; to: string }
+): Promise<ClickLogPage> {
+	return fetchClickLogPage(fetcher, `${URLS_PATH}/clicks`, page, perPage, range);
+}
+
+async function fetchClickLogPage(
+	fetcher: typeof fetch,
+	path: string,
+	page: number,
+	perPage: number,
+	range?: { from: string; to: string }
+): Promise<ClickLogPage> {
 	let response: Response;
 	try {
-		response = await fetcher(
-			`${getBackendUrl()}${URLS_PATH}/${encodeURIComponent(id)}/clicks?page=${page}&perPage=${perPage}`,
-			{ headers: { accept: 'application/json' } }
-		);
+		const search = new URLSearchParams({ page: String(page), perPage: String(perPage) });
+		if (range) {
+			search.set('from', `${range.from}T00:00:00Z`);
+			search.set('to', `${range.to}T23:59:59.999999999Z`);
+		}
+		response = await fetcher(`${getBackendUrl()}${path}?${search}`, {
+			headers: { accept: 'application/json' }
+		});
 	} catch {
 		throw new ShortURLApiError('The click service is unavailable.', 503);
 	}
@@ -231,6 +254,7 @@ export async function listURLClicks(
 		.filter(isRecord)
 		.map((item, index) => ({
 			id: String(item.id ?? index),
+			shortCode: stringValue(item, 'shortCode', 'short_code'),
 			clickedAt: stringValue(item, 'clickedAt', 'clicked_at') ?? '',
 			ipAddress: stringValue(item, 'ipAddress', 'ip_address') ?? 'Unknown',
 			userAgent: stringValue(item, 'userAgent', 'user_agent') ?? 'Unknown',
@@ -382,4 +406,44 @@ export async function createShortURL(
 			response.status
 		);
 	}
+}
+
+export async function getClickCounts(
+	fetcher: typeof fetch
+): Promise<{ days: number; total: number; items: { date: string; clicks: number }[] }> {
+	let response: Response;
+	try {
+		response = await fetcher(`${getBackendUrl()}/urls/clicks/counts`, {
+			headers: { accept: 'application/json' }
+		});
+	} catch {
+		throw new ShortURLApiError('The click service is unavailable.', 503);
+	}
+	const payload = await responsePayload(response);
+	if (!response.ok)
+		throw new ShortURLApiError(
+			errorMessage(payload, 'Unable to load total clicks.'),
+			response.status
+		);
+	const value = responseItem(payload);
+	const validCount = (value: unknown): value is number =>
+		typeof value === 'number' && Number.isSafeInteger(value) && value >= 0;
+	if (
+		!isRecord(value) ||
+		!validCount(value.days) ||
+		value.days < 1 ||
+		!validCount(value.total) ||
+		!Array.isArray(value.items) ||
+		!value.items.every(
+			(item) =>
+				isRecord(item) &&
+				typeof item.date === 'string' &&
+				/^\d{4}-\d{2}-\d{2}$/.test(item.date) &&
+				Number.isFinite(Date.parse(item.date)) &&
+				validCount(item.clicks)
+		)
+	) {
+		throw new ShortURLApiError('The click service returned invalid click counts.', 502);
+	}
+	return { days: value.days, total: value.total, items: value.items };
 }

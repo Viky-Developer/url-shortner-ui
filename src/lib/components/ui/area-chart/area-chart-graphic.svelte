@@ -1,4 +1,5 @@
 <script lang="ts">
+	const gradientId = $props.id();
 	type Point = { x: number; y: number };
 
 	let {
@@ -28,9 +29,13 @@
 	viewBox="0 0 {width} {height}"
 >
 	<defs>
-		<linearGradient id="areaGradient" x1="0" x2="0" y1="0" y2="1">
-			<stop class="text-primary/20" offset="0%" stop-color="currentColor"></stop>
-			<stop class="text-primary/0" offset="100%" stop-color="currentColor"></stop>
+		<linearGradient id={gradientId} x1="0" x2="0" y1="0" y2="1">
+			<stop
+				offset="0%"
+				stop-color="var(--chart-color, var(--primary))"
+				stop-opacity="var(--chart-fill-opacity, 0.2)"
+			></stop>
+			<stop offset="100%" stop-color="var(--chart-color, var(--primary))" stop-opacity="0"></stop>
 		</linearGradient>
 	</defs>
 
@@ -67,16 +72,22 @@
 
 	{#if mainLine}
 		<path
-			class="text-primary drop-shadow-md"
+			style:color="var(--chart-color, var(--primary))"
 			d={mainLine}
 			fill="none"
 			stroke="currentColor"
 			stroke-width="3"
 		></path>
-		<path d={areaPath} fill="url(#areaGradient)"></path>
+		<path d={areaPath} fill={`url(#${gradientId})`}></path>
 	{/if}
 
 	{#each mainPoints as point (point.x)}
-		<circle class="text-primary" cx={point.x} cy={point.y} fill="currentColor" r="4"></circle>
+		<circle
+			style:color="var(--chart-color, var(--primary))"
+			cx={point.x}
+			cy={point.y}
+			fill="currentColor"
+			r="4"
+		></circle>
 	{/each}
 </svg>

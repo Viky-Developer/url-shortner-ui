@@ -20,8 +20,33 @@
 	animation: route-content-enter 180ms ease-out both;
 }
 
+.route-content.analytics-enter {
+	animation-duration: 420ms;
+	animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Enable color interpolation only for an explicit theme change. */
+html.theme-changing,
+html.theme-changing *,
+html.theme-changing *::before,
+html.theme-changing *::after {
+	transition-property:
+		background-color, color, border-color, outline-color, fill, stroke, box-shadow !important;
+	transition-duration: 1000ms !important;
+	transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1) !important;
+	transition-delay: 0s !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
-	.route-content {
+	html.theme-changing,
+	html.theme-changing *,
+	html.theme-changing *::before,
+	html.theme-changing *::after {
+		transition: none !important;
+	}
+
+	.route-content,
+	.route-content.analytics-enter {
 		animation: none;
 	}
 }
