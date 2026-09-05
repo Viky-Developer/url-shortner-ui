@@ -41,7 +41,7 @@
 		{ href: resolve('/dashboard'), label: 'Dashboard', icon: LayoutDashboard },
 		{ href: resolve('/my-links'), label: 'My Links', icon: LinkIcon },
 		{ href: resolve('/analytics'), label: 'Analytics', icon: ChartNoAxesColumn },
-		{ href: resolve('/sessions'), label: 'Sessions', icon: LockKeyhole },
+		{ href: resolve('/sessions'), label: 'Sessions', icon: LockKeyhole }
 	];
 
 	const bottomNav = [{ href: resolve('/settings'), label: 'Settings', icon: Settings }];

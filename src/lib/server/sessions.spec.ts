@@ -4,21 +4,19 @@ vi.mock('$env/dynamic/private', () => ({ env: { APP_ENV: 'https://backend.test/a
 
 describe('session API', () => {
 	it('reads the backend envelope and strips unrecognized fields', async () => {
-		const fetcher = vi
-			.fn()
-			.mockResolvedValue(
-				Response.json({
-					data: [
-						{
-							id: 2,
-							deviceName: 'Chrome',
-							loggedInAt: '',
-							lastActiveAt: '',
-							refreshToken: 'secret'
-						}
-					]
-				})
-			);
+		const fetcher = vi.fn().mockResolvedValue(
+			Response.json({
+				data: [
+					{
+						id: 2,
+						deviceName: 'Chrome',
+						loggedInAt: '',
+						lastActiveAt: '',
+						refreshToken: 'secret'
+					}
+				]
+			})
+		);
 		expect(await listSessions(fetcher)).toEqual([
 			{ id: 2, deviceName: 'Chrome', loggedInAt: '', lastActiveAt: '' }
 		]);
