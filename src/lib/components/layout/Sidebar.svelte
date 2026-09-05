@@ -6,7 +6,7 @@
 		LayoutDashboard,
 		LinkIcon,
 		LogOut,
-		Package,
+		LockKeyhole,
 		Settings,
 		X
 	} from '$lib/components/ui/icons';
@@ -41,7 +41,7 @@
 		{ href: resolve('/dashboard'), label: 'Dashboard', icon: LayoutDashboard },
 		{ href: resolve('/my-links'), label: 'My Links', icon: LinkIcon },
 		{ href: resolve('/analytics'), label: 'Analytics', icon: ChartNoAxesColumn },
-		{ href: resolve('/demo'), label: 'Demo', icon: Package }
+		{ href: resolve('/sessions'), label: 'Sessions', icon: LockKeyhole },
 	];
 
 	const bottomNav = [{ href: resolve('/settings'), label: 'Settings', icon: Settings }];
