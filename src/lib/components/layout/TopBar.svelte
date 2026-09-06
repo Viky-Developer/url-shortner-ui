@@ -18,6 +18,7 @@
 	const userName = $derived(user?.displayName || 'User');
 
 	const pageTitle = $derived.by(() => {
+		if (page.url.pathname.startsWith('/sessions')) return 'Sessions';
 		if (page.url.pathname.startsWith('/analytics')) return 'Link Analytics';
 		if (page.url.pathname.startsWith('/my-links')) return 'My Links';
 		if (page.url.pathname.startsWith('/dashboard')) return `Welcome, ${userName}`;

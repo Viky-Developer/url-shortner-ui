@@ -251,38 +251,6 @@
 		modalStep = 'preview';
 	}
 
-	// async function updateURL(): Promise<void> {
-	// 	if (!selected || saving) return;
-	// 	const selectedId = selected.id;
-	// 	saving = true;
-	// 	modalError = '';
-	// 	const toastId = toast.loading('Updating your link…');
-	// 	try {
-	// 		const response = await fetch(`${base}/my-links/${encodeURIComponent(selected.id)}`, {
-	// 			method: 'PATCH',
-	// 			headers: { 'content-type': 'application/json' },
-	// 			body: JSON.stringify({
-	// 				originalURL: values.originalURL.trim(),
-	// 				title: values.title.trim(),
-	// 				description: values.description.trim(),
-	// 				status: values.status,
-	// 				...(expirationISOString() ? { expiresAt: expirationISOString() } : {})
-	// 			})
-	// 		});
-	// 		const payload: unknown = await response.json();
-	// 		if (!response.ok) throw new Error(responseMessage(payload, 'Unable to update this URL.'));
-	// 		statusOverrides = { ...statusOverrides, [selectedId]: values.status };
-	// 		toast.success('Link updated successfully.', { id: toastId });
-	// 		selected = undefined;
-	// 		// await invalidateAll();
-	// 	} catch (error) {
-	// 		modalError = error instanceof Error ? error.message : 'Unable to update this URL.';
-	// 		toast.error(modalError, { id: toastId });
-	// 	} finally {
-	// 		saving = false;
-	// 	}
-	// }
-
 	function changePage(page: number): void {
 		const status = statusQuery(filter);
 		void goto(resolve(`/my-links?page=${page}${status}`), {
@@ -377,7 +345,7 @@
 				</div>
 			</div>
 			<div class="overflow-x-auto">
-				<table class="w-full min-w-[760px] border-collapse text-sm">
+				<table class="w-full min-w-190 border-collapse text-sm">
 					<thead>
 						<tr
 							class="border-b border-border bg-muted/30 text-label-caps tracking-wider text-muted-foreground uppercase"
@@ -452,11 +420,6 @@
 								</td>
 								<td class="px-5 py-4 text-right">
 									<div class="flex justify-end gap-2">
-										<a
-											href={resolve('/analytics')}
-											class="inline-flex h-9 items-center rounded-md border border-border px-3 font-medium text-primary hover:bg-muted"
-											>Analytics</a
-										>
 										<button
 											type="button"
 											disabled={['expired', 'deleted'].includes(statusFor(url))}

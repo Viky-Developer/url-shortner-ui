@@ -48,3 +48,26 @@ test('signs in through SSR and redirects to the requested protected route', asyn
 	await page.goto('/login');
 	await expect(page).toHaveURL('/dashboard');
 });
+
+test('keeps login light after a client-side auth redirect from dark mode', async ({
+	context,
+	page
+}) => {
+	await page.goto('/login');
+	await page.getByLabel('Email').fill('user@example.com');
+	await page.getByTestId('login-password-input').fill('existing-password');
+	await page.getByRole('button', { name: 'Sign In' }).click();
+	await expect(page).toHaveURL('/dashboard');
+
+	await page.evaluate(() => {
+		localStorage.setItem('theme', 'dark');
+		document.documentElement.classList.add('dark');
+	});
+	await context.clearCookies();
+	await page.getByRole('link', { name: 'Sessions' }).click();
+
+	await expect(page).toHaveURL('/login?redirectTo=%2Fsessions');
+	await expect(page.locator('html')).not.toHaveClass(/dark/);
+	await expect(page.locator('main')).toHaveCSS('background-color', 'rgb(251, 248, 255)');
+	expect(await page.evaluate(() => localStorage.getItem('theme'))).toBe('dark');
+});

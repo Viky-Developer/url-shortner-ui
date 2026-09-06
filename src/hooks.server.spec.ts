@@ -191,7 +191,7 @@ describe('authentication middleware', () => {
 
 		await expect(runHandle(event, resolve)).rejects.toMatchObject({
 			status: 303,
-			location: '/login?redirectTo=%2Fanalytics'
+			location: '/login?redirectTo=%2Fanalytics&reason=session-expired'
 		});
 		expect(resolve).not.toHaveBeenCalled();
 		expect(cookies.delete).toHaveBeenCalledTimes(2);
@@ -209,7 +209,7 @@ describe('authentication middleware', () => {
 
 		await expect(runHandle(event)).rejects.toMatchObject({
 			status: 303,
-			location: '/login?redirectTo=%2Fanalytics%3Fperiod%3Dweek'
+			location: '/login?redirectTo=%2Fanalytics%3Fperiod%3Dweek&reason=session-expired'
 		});
 		expect(cookies.delete).toHaveBeenCalledTimes(2);
 	});

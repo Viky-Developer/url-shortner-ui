@@ -32,7 +32,7 @@ function isApiRequest(event: RequestEvent): boolean {
 	);
 }
 
-function unauthorizedResponse(event: RequestEvent): Response {
+function unauthorizedResponse(event: RequestEvent, reason?: 'session-expired'): Response {
 	if (isApiRequest(event)) {
 		return Response.json(
 			{ statusCode: 401, error: 'Authentication is required.' },
@@ -41,8 +41,11 @@ function unauthorizedResponse(event: RequestEvent): Response {
 	}
 
 	const destination = `${event.url.pathname}${event.url.search}`;
-	if (destination === '/') return redirect(303, LOGIN_PATH);
-	return redirect(303, `${LOGIN_PATH}?redirectTo=${encodeURIComponent(destination)}`);
+	const search = new URLSearchParams();
+	if (destination !== '/') search.set('redirectTo', destination);
+	if (reason) search.set('reason', reason);
+	const query = search.toString();
+	return redirect(303, query ? `${LOGIN_PATH}?${query}` : LOGIN_PATH);
 }
 
 function setAuthenticatedLocals(
@@ -91,7 +94,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 		return response;
 	} catch {
 		clearAuthCookies(event.cookies);
-		return unauthorizedResponse(event);
+		return unauthorizedResponse(event, 'session-expired');
 	}
 };
 

@@ -195,7 +195,7 @@
 				<p class="mt-1 text-xs text-muted-foreground">
 					All links · {data.clickRange
 						? `${data.clickRange.from} to ${data.clickRange.to}`
-						: 'all dates'} · timestamps in UTC
+						: 'all dates'}
 				</p>
 			</div>
 			<DateRangePicker
