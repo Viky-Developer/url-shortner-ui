@@ -17,6 +17,7 @@ async function request(fetcher: typeof fetch, path: string, method: string): Pro
 	try {
 		response = await fetcher(`${getBackendUrl()}/auth/sessions${path}`, {
 			method,
+			...(method === 'GET' ? { cache: 'no-store' } : {}),
 			headers: { accept: 'application/json' }
 		});
 	} catch {

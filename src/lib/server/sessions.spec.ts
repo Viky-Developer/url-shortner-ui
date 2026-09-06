@@ -22,7 +22,7 @@ describe('session API', () => {
 		]);
 		expect(fetcher).toHaveBeenCalledWith(
 			'https://backend.test/api/v1/auth/sessions',
-			expect.objectContaining({ method: 'GET' })
+			expect.objectContaining({ method: 'GET', cache: 'no-store' })
 		);
 	});
 	it('accepts an empty list', async () => {

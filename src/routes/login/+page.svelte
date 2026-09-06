@@ -14,11 +14,11 @@
 	} from '$lib/components/ui/icons';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
-	import { untrack } from 'svelte';
+	import { onMount, untrack } from 'svelte';
 	import { toast } from 'svelte-sonner';
 	import type { PageProps, SubmitFunction } from './$types';
 
-	let { form }: PageProps = $props();
+	let { data, form }: PageProps = $props();
 	const initialForm = untrack(() => form);
 
 	let email = $state(initialForm?.values?.email ?? '');
@@ -56,6 +56,10 @@
 	const formProgress = $derived((emailValid ? 50 : 0) + (password.length > 0 ? 50 : 0));
 	const loginSucceeded = $derived(submitted || form?.success === true);
 	const submitDisabled = $derived(!formValid || submitting || loginSucceeded);
+
+	onMount(() => {
+		if (data.sessionExpired) toast.info('Your session expired. Please sign in again.');
+	});
 
 	function signInErrorMessage(status: number): string {
 		if (status === 401 || status === 403) return 'The email or password is incorrect.';
@@ -108,7 +112,7 @@
 	class="flex min-h-screen items-center justify-center bg-background p-4 text-foreground sm:p-6"
 >
 	<section
-		class="relative w-full max-w-md overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-lg"
+		class="relative w-full max-w-md overflow-hidden rounded-lg border border-border bg-card shadow-lg"
 		aria-labelledby="login-heading"
 	>
 		<div
@@ -132,10 +136,6 @@
 			</header>
 
 			<form method="POST" class="space-y-6" novalidate use:enhance={enhanceLogin}>
-				<p class="text-right text-xs text-muted-foreground">
-					<span class="font-semibold text-destructive" aria-hidden="true">*</span> Required fields
-				</p>
-
 				<div class="space-y-2">
 					<div class="relative">
 						<Mail
@@ -162,14 +162,14 @@
 							}}
 							aria-invalid={Boolean(emailError)}
 							aria-describedby={emailError ? 'login-email-error' : undefined}
-							class="h-12 rounded-lg border-zinc-200 bg-white pt-4 pr-4 pb-1.5 pl-10 text-body-base text-foreground shadow-sm focus-visible:ring-2 focus-visible:ring-ring aria-invalid:border-destructive aria-invalid:ring-destructive"
+							class="h-12 rounded-lg border-input bg-background pt-4 pr-4 pb-1.5 pl-10 text-body-base text-foreground shadow-sm focus-visible:ring-2 focus-visible:ring-ring aria-invalid:border-destructive aria-invalid:ring-destructive"
 						/>
 						<Label
 							for="login-email"
 							class={[
 								'pointer-events-none absolute z-10 -translate-y-1/2 transition-all duration-200 ease-out',
 								emailFocused || email.length > 0
-									? `top-0 left-3 bg-white px-1 text-label-caps leading-4 font-semibold tracking-wide ${emailError ? 'text-destructive' : emailFocused ? 'text-primary' : 'text-muted-foreground'}`
+									? `top-0 left-3 bg-background px-1 text-label-caps leading-4 font-semibold tracking-wide ${emailError ? 'text-destructive' : emailFocused ? 'text-primary' : 'text-muted-foreground'}`
 									: 'top-1/2 left-10 text-body-base text-muted-foreground/70'
 							]}
 						>
@@ -208,14 +208,14 @@
 							}}
 							aria-invalid={Boolean(passwordError)}
 							aria-describedby={passwordError ? 'login-password-error' : undefined}
-							class="h-12 rounded-lg border-zinc-200 bg-white pt-4 pr-10 pb-1.5 pl-10 font-mono text-code-base text-foreground shadow-sm focus-visible:ring-2 focus-visible:ring-ring aria-invalid:border-destructive aria-invalid:ring-destructive"
+							class="h-12 rounded-lg border-input bg-background pt-4 pr-10 pb-1.5 pl-10 font-mono text-code-base text-foreground shadow-sm focus-visible:ring-2 focus-visible:ring-ring aria-invalid:border-destructive aria-invalid:ring-destructive"
 						/>
 						<Label
 							for="login-password"
 							class={[
 								'pointer-events-none absolute z-10 -translate-y-1/2 transition-all duration-200 ease-out',
 								passwordFocused || password.length > 0
-									? `top-0 left-3 bg-white px-1 text-label-caps leading-4 font-semibold tracking-wide ${passwordError ? 'text-destructive' : passwordFocused ? 'text-primary' : 'text-muted-foreground'}`
+									? `top-0 left-3 bg-background px-1 text-label-caps leading-4 font-semibold tracking-wide ${passwordError ? 'text-destructive' : passwordFocused ? 'text-primary' : 'text-muted-foreground'}`
 									: 'top-1/2 left-10 text-body-base text-muted-foreground/70'
 							]}
 						>

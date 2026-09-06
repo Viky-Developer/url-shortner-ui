@@ -9,6 +9,7 @@
 	import Globe from '@lucide/svelte/icons/globe';
 	import Clock from '@lucide/svelte/icons/clock';
 	import { Dialog } from 'bits-ui';
+	import { toast } from 'svelte-sonner';
 	import type { SubmitFunction } from '@sveltejs/kit';
 	import type { PageProps } from './$types';
 
@@ -31,9 +32,16 @@
 			return;
 		}
 		busy = true;
-		return async ({ update }) => {
+		return async ({ result, update }) => {
 			try {
 				await update();
+				if (result.type === 'success' && typeof result.data?.success === 'string') {
+					toast.success(result.data.success);
+				} else if (result.type === 'failure' && typeof result.data?.error === 'string') {
+					toast.error(result.data.error);
+				} else if (result.type === 'error') {
+					toast.error('Unable to update sessions. Please try again.');
+				}
 			} finally {
 				busy = false;
 				confirmation = null;

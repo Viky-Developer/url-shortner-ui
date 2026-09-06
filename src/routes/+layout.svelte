@@ -17,6 +17,22 @@
 		}
 	}
 	const isAuthRoute = $derived(['/login', '/signup'].includes(page.url.pathname));
+
+	$effect(() => {
+		const authRoute = isAuthRoute;
+		const root = document.documentElement;
+		root.classList.remove('theme-changing');
+
+		if (authRoute) {
+			root.classList.remove('dark');
+			return;
+		}
+
+		const savedTheme = localStorage.getItem('theme');
+		const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+		root.classList.toggle('dark', savedTheme ? savedTheme === 'dark' : prefersDark);
+	});
+
 	const loadingPage = $derived.by(() => {
 		const pathname = navigating.to?.url.pathname;
 		if (pathname === page.url.pathname) return undefined;
