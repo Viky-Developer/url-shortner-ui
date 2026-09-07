@@ -1,10 +1,11 @@
 import { dev } from '$app/environment';
 import { env } from '$env/dynamic/private';
-import type { AuthTokens } from '$lib/types/auth';
+import type { AuthTokens, UserResponse } from '$lib/types/auth';
 import type { Cookies } from '@sveltejs/kit';
 
 export const ACCESS_TOKEN_COOKIE = 'access_token';
 export const REFRESH_TOKEN_COOKIE = 'refresh_token';
+export const USER_METADATA_COOKIE = 'user_metadata';
 
 function positiveInteger(name: string, defaultValue: number): number {
 	const value = env[name]?.trim();
@@ -50,7 +51,50 @@ export function setAuthCookies(cookies: Cookies, tokens: AuthTokens): void {
 	});
 }
 
+export function setUserMetadataCookie(cookies: Cookies, user: UserResponse): void {
+	cookies.set(
+		USER_METADATA_COOKIE,
+		JSON.stringify({
+			passwordAgeDays: user.passwordAgeDays ?? null,
+			changeSuggested: user.changeSuggested === true,
+			status: user.status ?? null
+		}),
+		{
+			...baseCookieOptions,
+			maxAge: REFRESH_TOKEN_LIFETIME_SECONDS
+		}
+	);
+}
+
+export function getUserMetadataCookie(
+	cookies: Cookies
+): Pick<UserResponse, 'passwordAgeDays' | 'changeSuggested' | 'status'> {
+	try {
+		const value: unknown = JSON.parse(cookies.get(USER_METADATA_COOKIE) ?? 'null');
+		if (!value || typeof value !== 'object') return {};
+		const metadata = value as Record<string, unknown>;
+		return {
+			...(typeof metadata.passwordAgeDays === 'number'
+				? { passwordAgeDays: metadata.passwordAgeDays }
+				: {}),
+			changeSuggested: metadata.changeSuggested === true,
+			...(typeof metadata.status === 'string' ? { status: metadata.status } : {})
+		};
+	} catch {
+		return {};
+	}
+}
+
+export function setAccountStatusCookie(cookies: Cookies, status: string): void {
+	const metadata = getUserMetadataCookie(cookies);
+	cookies.set(USER_METADATA_COOKIE, JSON.stringify({ ...metadata, status }), {
+		...baseCookieOptions,
+		maxAge: REFRESH_TOKEN_LIFETIME_SECONDS
+	});
+}
+
 export function clearAuthCookies(cookies: Cookies): void {
 	cookies.delete(ACCESS_TOKEN_COOKIE, baseCookieOptions);
 	cookies.delete(REFRESH_TOKEN_COOKIE, baseCookieOptions);
+	cookies.delete(USER_METADATA_COOKIE, baseCookieOptions);
 }

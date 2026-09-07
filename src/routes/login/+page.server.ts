@@ -1,6 +1,6 @@
 import { AuthApiError, loginUser } from '$lib/server/auth';
 import { verifyAccessToken } from '$lib/server/access-token';
-import { setAuthCookies } from '$lib/server/auth-cookies';
+import { setAuthCookies, setUserMetadataCookie } from '$lib/server/auth-cookies';
 import type { LoginRequest } from '$lib/types/auth';
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
@@ -102,6 +102,7 @@ export const actions = {
 				accessToken: auth.token.accessToken,
 				refreshToken: auth.token.refreshToken
 			});
+			setUserMetadataCookie(cookies, auth.user);
 
 			return {
 				success: true,

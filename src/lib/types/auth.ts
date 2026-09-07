@@ -10,6 +10,11 @@ export interface LoginRequest {
 	revokeSessionId?: number;
 }
 
+export interface ChangePasswordRequest {
+	currentPassword: string;
+	newPassword: string;
+}
+
 export interface UserResponse {
 	id: string | null;
 	email: string | null;
@@ -17,6 +22,7 @@ export interface UserResponse {
 	role?: string | null;
 	passwordAgeDays?: number | null;
 	changeSuggested?: boolean | null;
+	status?: string | null;
 }
 
 export interface AuthResponse {
@@ -39,6 +45,9 @@ export interface AuthenticatedUser {
 	displayName: string;
 	email?: string;
 	role?: string;
+	passwordAgeDays?: number | null;
+	changeSuggested?: boolean | null;
+	status?: string | null;
 }
 
 export interface AuthResponseEnvelope {

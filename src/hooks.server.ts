@@ -10,6 +10,7 @@ import {
 	ACCESS_TOKEN_COOKIE,
 	REFRESH_TOKEN_COOKIE,
 	clearAuthCookies,
+	getUserMetadataCookie,
 	setAuthCookies
 } from '$lib/server/auth-cookies';
 
@@ -55,7 +56,10 @@ function setAuthenticatedLocals(
 ): void {
 	event.locals.authenticated = true;
 	event.locals.accessToken = accessToken;
-	event.locals.user = accessTokenUserFromClaims(claims);
+	event.locals.user = {
+		...accessTokenUserFromClaims(claims),
+		...getUserMetadataCookie(event.cookies)
+	};
 }
 
 export const handle: Handle = async ({ event, resolve }) => {

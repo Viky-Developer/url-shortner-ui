@@ -3,7 +3,6 @@
 	import { Menu, Plus } from '$lib/components/ui/icons';
 	import { openCreateLink } from '$lib/state/create-link';
 	import type { AuthenticatedUser } from '$lib/types/auth';
-	import { ThemeToggle } from '$lib/components/ui/theme-toggle';
 
 	let {
 		user,
@@ -54,7 +53,7 @@
 			</p>
 		</div>
 
-		<!-- Right: Create Link + Theme Toggle -->
+		<!-- Right: Create Link -->
 		<div class="flex shrink-0 items-center gap-1 sm:gap-3 md:gap-4">
 			<button
 				type="button"
@@ -65,8 +64,6 @@
 				<Plus class="size-5" />
 				<span class="hidden md:inline">Create Link</span>
 			</button>
-
-			<ThemeToggle class="shrink-0" />
 		</div>
 	</div>
 </header>

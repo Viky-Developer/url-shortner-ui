@@ -45,6 +45,6 @@ describe('POST /logout', () => {
 			POST({ cookies, fetch: fetcher } as unknown as RequestEvent)
 		).rejects.toMatchObject({ status: 303, location: '/login' });
 
-		expect(cookies.delete).toHaveBeenCalledTimes(2);
+		expect(cookies.delete).toHaveBeenCalledTimes(3);
 	});
 });
