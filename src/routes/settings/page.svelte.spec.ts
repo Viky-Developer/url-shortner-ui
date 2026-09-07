@@ -33,9 +33,9 @@ describe('settings page', () => {
 
 	it('validates a different matching password and provides visibility controls', async () => {
 		renderSettings(false);
-		const currentPassword = page.getByLabelText('Current password');
-		const newPassword = page.getByLabelText('New password');
-		const confirmation = page.getByLabelText('Confirm new password');
+		const currentPassword = page.getByRole('textbox', { name: 'Current password' });
+		const newPassword = page.getByRole('textbox', { name: 'New password' });
+		const confirmation = page.getByRole('textbox', { name: 'Confirm new password' });
 		const saveButton = page.getByRole('button', { name: 'Save changes' });
 
 		await currentPassword.fill('Password1');
