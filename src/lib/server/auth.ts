@@ -2,6 +2,7 @@ import { env } from '$env/dynamic/private';
 import type {
 	AuthResponse,
 	AuthTokens,
+	ChangePasswordRequest,
 	LoginRequest,
 	RegisterRequest,
 	UserResponse
@@ -11,6 +12,7 @@ const REGISTER_PATH = '/auth/register';
 const LOGIN_PATH = '/auth/login';
 const REFRESH_PATH = '/auth/refresh';
 const LOGOUT_PATH = '/auth/logout';
+const CHANGE_PASSWORD_PATH = '/auth/change-password';
 
 export class AuthApiError extends Error {
 	constructor(
@@ -42,7 +44,8 @@ function isUserResponse(value: unknown): value is UserResponse {
 			typeof value.passwordAgeDays === 'number') &&
 		(value.changeSuggested === undefined ||
 			value.changeSuggested === null ||
-			typeof value.changeSuggested === 'boolean')
+			typeof value.changeSuggested === 'boolean') &&
+		(value.status === undefined || isNullableString(value.status))
 	);
 }
 
@@ -254,6 +257,37 @@ export async function logoutUser(
 
 	if (!response.ok) {
 		throw new AuthApiError('Unable to sign out from the server.', response.status);
+	}
+}
+
+export async function changePassword(
+	fetcher: typeof globalThis.fetch,
+	request: ChangePasswordRequest
+): Promise<void> {
+	const backendUrl = getBackendUrl();
+	let response: Response;
+
+	try {
+		response = await fetcher(`${backendUrl}${CHANGE_PASSWORD_PATH}`, {
+			method: 'POST',
+			headers: {
+				accept: 'application/json',
+				'content-type': 'application/json'
+			},
+			body: JSON.stringify(request)
+		});
+	} catch {
+		throw new AuthApiError('The password service is unavailable. Please try again.', 503);
+	}
+
+	if (!response.ok) {
+		let message = 'Unable to change your password. Please try again.';
+		try {
+			message = getErrorMessage(await response.json()) || message;
+		} catch {
+			// Keep the safe fallback when the backend does not return JSON.
+		}
+		throw new AuthApiError(message, response.status);
 	}
 }
 

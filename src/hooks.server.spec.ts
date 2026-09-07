@@ -194,7 +194,7 @@ describe('authentication middleware', () => {
 			location: '/login?redirectTo=%2Fanalytics&reason=session-expired'
 		});
 		expect(resolve).not.toHaveBeenCalled();
-		expect(cookies.delete).toHaveBeenCalledTimes(2);
+		expect(cookies.delete).toHaveBeenCalledTimes(3);
 	});
 
 	it('clears an invalid session and redirects browser navigation to login', async () => {
@@ -211,7 +211,7 @@ describe('authentication middleware', () => {
 			status: 303,
 			location: '/login?redirectTo=%2Fanalytics%3Fperiod%3Dweek&reason=session-expired'
 		});
-		expect(cookies.delete).toHaveBeenCalledTimes(2);
+		expect(cookies.delete).toHaveBeenCalledTimes(3);
 	});
 
 	it('returns JSON 401 for an unauthenticated protected API request', async () => {

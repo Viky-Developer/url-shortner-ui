@@ -1,6 +1,6 @@
 import { env } from '$env/dynamic/private';
 import { describe, expect, it, vi } from 'vitest';
-import { loginUser, logoutUser, refreshAccessToken, registerUser } from './auth';
+import { changePassword, loginUser, logoutUser, refreshAccessToken, registerUser } from './auth';
 
 function successfulAuthResponse(): Response {
 	return new Response(
@@ -16,7 +16,8 @@ function successfulAuthResponse(): Response {
 					user: {
 						id: 'user-id',
 						email: 'user@example.com',
-						displayName: 'Jane'
+						displayName: 'Jane',
+						status: 'PENDING_DELETION'
 					}
 				}
 			]
@@ -128,6 +129,7 @@ describe('loginUser', () => {
 			accessToken: 'access-token',
 			refreshToken: 'refresh-token'
 		});
+		expect(result.user.status).toBe('PENDING_DELETION');
 		expect(fetchMock).toHaveBeenCalledWith(
 			`${env.APP_ENV}/auth/login`,
 			expect.objectContaining({
@@ -259,5 +261,27 @@ describe('logoutUser', () => {
 			status: 401,
 			message: 'Unable to sign out from the server.'
 		});
+	});
+});
+
+describe('changePassword', () => {
+	it('posts the current and new passwords to the authenticated endpoint', async () => {
+		const fetchMock = vi.fn(async () => new Response(null, { status: 204 }));
+
+		await changePassword(fetchMock as typeof fetch, {
+			currentPassword: 'Current1',
+			newPassword: 'Different2'
+		});
+
+		expect(fetchMock).toHaveBeenCalledWith(
+			`${env.APP_ENV}/auth/change-password`,
+			expect.objectContaining({
+				method: 'POST',
+				body: JSON.stringify({
+					currentPassword: 'Current1',
+					newPassword: 'Different2'
+				})
+			})
+		);
 	});
 });
