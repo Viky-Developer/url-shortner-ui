@@ -203,7 +203,7 @@
 </script>
 
 <svelte:head>
-	<title>Admin Control Panel | Linkflow</title>
+	<title>Admin Control Panel | Linkpluse</title>
 	<meta name="description" content="Manage platform security and maintenance settings." />
 </svelte:head>
 

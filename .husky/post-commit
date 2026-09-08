@@ -1,0 +1,3 @@
+#!/usr/bin/env sh
+
+bash scripts/gitnexus-refresh.sh --background "commit"

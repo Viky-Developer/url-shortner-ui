@@ -4,6 +4,7 @@
 	import { base, resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import { DatePicker } from '$lib/components/ui/datepicker';
+	import ServiceUnavailable from '$lib/components/layout/ServiceUnavailable.svelte';
 	import { Pagination } from '$lib/components/ui/pagination';
 	import { ArrowRight, CircleCheck, LinkIcon, LoaderCircle, X } from '$lib/components/ui/icons';
 	import { CalendarDate, getLocalTimeZone, today, type DateValue } from '@internationalized/date';
@@ -206,7 +207,7 @@
 </script>
 
 <svelte:head
-	><title>Dashboard | Linkflow</title><meta
+	><title>Dashboard | Linkpluse</title><meta
 		name="description"
 		content="Create and manage your shortened URLs."
 	/></svelte:head
@@ -214,294 +215,304 @@
 
 <svelte:window onkeydown={(event) => createOpen && event.key === 'Escape' && closeCreate()} />
 
-<div class="mx-auto flex w-full max-w-7xl flex-col gap-6">
-	<section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3" aria-label="URL summary">
-		<article class="shadow-micro h-44 rounded-xl border border-border bg-card p-5">
-			<p class="text-label-caps font-semibold tracking-wider text-muted-foreground uppercase">
-				Total URLs
-			</p>
-			<p class="mt-3 text-3xl font-semibold tracking-tight">
-				{totalURLs === undefined ? '—' : number(totalURLs)}
-			</p>
-			<div class="mt-4 h-0.5 bg-muted"><div class="h-full w-2/3 bg-primary"></div></div>
-		</article>
-		<article class="shadow-micro h-44 rounded-xl border border-border bg-card p-5">
-			<p class="text-label-caps font-semibold tracking-wider text-muted-foreground uppercase">
-				Total Clicks
-			</p>
-			<div class="mt-3 flex items-baseline gap-3">
-				<p class="text-3xl font-semibold tracking-tight">
-					{totalClicks === undefined ? '—' : number(totalClicks)}
+{#if data.serviceUnavailable}
+	<ServiceUnavailable />
+{:else}
+	<div class="mx-auto flex w-full max-w-7xl flex-col gap-6">
+		<section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3" aria-label="URL summary">
+			<article class="shadow-micro h-44 rounded-xl border border-border bg-card p-5">
+				<p class="text-label-caps font-semibold tracking-wider text-muted-foreground uppercase">
+					Total URLs
 				</p>
-			</div>
-			{#if data.clickCounts}
-				<svg
-					class="mt-2 h-12 w-full overflow-visible"
-					viewBox="0 0 600 96"
-					preserveAspectRatio="none"
-					role="img"
-					aria-label="Clicks during the last seven days"
-				>
-					<defs>
-						<linearGradient id="click-area" x1="0" y1="0" x2="0" y2="1">
-							<stop offset="0%" stop-color="var(--primary)" stop-opacity="0.22" />
-							<stop offset="100%" stop-color="var(--primary)" stop-opacity="0.02" />
-						</linearGradient>
-					</defs>
-					<path d={clickChart.area} fill="url(#click-area)" />
-					<path
-						d={clickChart.line}
-						fill="none"
-						stroke="var(--primary)"
-						stroke-width="4"
-						stroke-linecap="round"
-						stroke-linejoin="round"
-						vector-effect="non-scaling-stroke"
-					/>
-					{#each clickChart.points as point (point.key)}
-						<circle cx={point.x} cy={point.y} r="8" fill="transparent">
-							<title>{point.date}: {point.count} {point.count === 1 ? 'click' : 'clicks'}</title>
-						</circle>
-					{/each}
-				</svg>
-				<p class="text-xs text-muted-foreground">
-					Last {data.clickCounts.days} days · all links
+				<p class="mt-3 text-3xl font-semibold tracking-tight">
+					{totalURLs === undefined ? '—' : number(totalURLs)}
 				</p>
-			{:else}<p role="alert" class="mt-4 text-sm text-destructive">{data.clickCountsError}</p>{/if}
-		</article>
-		<article
-			class="shadow-micro h-44 rounded-xl border border-border bg-card p-5 sm:col-span-2 xl:col-span-1"
-		>
-			<p class="text-label-caps font-semibold tracking-wider text-muted-foreground uppercase">
-				Active Links
-			</p>
-			<div class="mt-3 flex items-baseline gap-2">
-				<p class="text-3xl font-semibold tracking-tight">
-					{activeLinks === undefined ? '—' : number(activeLinks)}
-				</p>
-				<p class="text-body-sm text-muted-foreground">
-					/ {totalURLs === undefined ? '—' : number(totalURLs)}
-				</p>
-			</div>
-			<div class="mt-4 flex gap-1" aria-hidden="true">
-				{#each [0, 1, 2, 3, 4] as segment (segment)}<span
-						class={[
-							'h-2 flex-1 first:rounded-l-full last:rounded-r-full',
-							segment < Math.ceil(((activeLinks ?? 0) / Math.max(totalURLs ?? 0, 1)) * 5)
-								? 'bg-success'
-								: 'bg-muted'
-						]}
-					></span>{/each}
-			</div>
-		</article>
-	</section>
-
-	<section
-		class="shadow-micro relative overflow-hidden rounded-xl border border-border bg-card p-6 sm:p-8"
-	>
-		<form
-			class="relative mx-auto flex max-w-3xl flex-col items-center gap-4"
-			onsubmit={previewShortURL}
-			novalidate
-		>
-			<h1 class="text-2xl font-semibold tracking-tight">Quick Shorten</h1>
-			<div
-				class="shadow-micro flex w-full flex-col gap-2 rounded-lg border border-input bg-background p-1 transition-shadow has-[input:focus-visible]:ring-2 has-[input:focus-visible]:ring-ring/40 sm:flex-row"
-			>
-				<label for="quickURL" class="sr-only">Long URL to preview</label>
-				<input
-					id="quickURL"
-					type="url"
-					required
-					placeholder="Paste your long URL here..."
-					bind:value={quickURL}
-					oninput={() => (quickURLError = '')}
-					aria-invalid={quickURLError ? 'true' : undefined}
-					class="min-h-11 flex-1 bg-transparent px-4 text-sm outline-none placeholder:text-muted-foreground/60"
-				/>
-				<button
-					type="submit"
-					class="inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-md bg-primary px-6 text-sm font-semibold text-primary-foreground transition-all hover:-translate-y-0.5 hover:bg-primary/90 active:translate-y-0 active:scale-95 disabled:opacity-60"
-				>
-					<LinkIcon class="size-4" />Shorten
-				</button>
-			</div>
-			<p class="text-xs text-muted-foreground">
-				Preview only — this does not create or save a link.
-			</p>
-			{#if quickPreview}<p
-					role="status"
-					class="rounded-md bg-primary/5 px-4 py-2 font-mono text-sm text-primary"
-				>
-					Example: {quickPreview}
-				</p>{/if}
-		</form>
-	</section>
-
-	<section class="flex flex-col gap-4">
-		<div class="flex items-center justify-between">
-			<h2 class="text-2xl font-semibold tracking-tight">Recent URLs</h2>
-			<a
-				href={resolve('/my-links')}
-				class="inline-flex items-center gap-1 text-label-caps font-semibold tracking-wide text-primary uppercase"
-				>View all <ArrowRight class="size-4" /></a
-			>
-		</div>
-		{#if data.loadError}
-			<div
-				class="rounded-xl border border-destructive/30 bg-destructive/5 p-6 text-sm text-destructive"
-				role="alert"
-			>
-				{data.loadError}
-			</div>
-		{:else if data.urls.length === 0}
-			<div class="rounded-xl border border-dashed border-border bg-card p-10 text-center">
-				<LinkIcon class="mx-auto size-8 text-muted-foreground" />
-				<h3 class="mt-3 font-semibold">No shortened URLs yet</h3>
-				<p class="mt-1 text-sm text-muted-foreground">Paste your first URL above to get started.</p>
-			</div>
-		{:else}
-			<div class="shadow-micro overflow-x-auto rounded-xl border border-border bg-card">
-				<table class="w-full min-w-[820px] border-collapse text-center text-sm">
-					<thead
-						><tr
-							class="border-b border-border bg-muted/30 text-label-caps tracking-wider text-muted-foreground uppercase"
-							><th class="px-5 py-4 text-left font-medium">Title / Original URL</th><th
-								class="px-5 py-4 text-center font-medium">Short Code</th
-							><th class="px-5 py-4 text-center font-medium">Clicks</th><th
-								class="px-5 py-4 text-center font-medium">Status</th
-							><th class="px-5 py-4 text-center font-medium">Health</th><th
-								class="px-5 py-4 text-center font-medium">Created At</th
-							></tr
-						></thead
-					>
-					<tbody class="divide-y divide-border"
-						>{#each recentURLs as url (url.id)}<tr class="transition-colors hover:bg-muted/35">
-								<td class="max-w-82.5 px-5 py-4 text-left"
-									><p class="truncate font-medium">{url.title || 'Untitled link'}</p>
-									<p class="mt-1 truncate text-xs text-muted-foreground">{url.originalURL}</p></td
-								>
-								<td class="px-5 py-4 text-center"
-									><span class="rounded bg-primary/5 px-2 py-1 font-mono text-xs text-primary"
-										>{shortLabel(url.shortURL, url.shortCode)}</span
-									></td
-								>
-								<td class="px-5 py-4 text-center font-mono">
-									<button
-										type="button"
-										onclick={() => goto(resolve('/my-links/[id]/analytics', { id: url.id }))}
-										class="rounded-md px-3 py-2 text-primary hover:bg-primary/10"
-										aria-label={`View ${url.clicks} clicks for ${url.title || url.shortCode}`}
-										>{number(url.clicks)}</button
-									>
-								</td>
-								<td class="px-5 py-4 text-center"
-									><span
-										class={[
-											'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium capitalize',
-											url.status === 'active'
-												? 'bg-success/10 text-success'
-												: 'bg-muted text-muted-foreground'
-										]}
-										><span
-											class={[
-												'size-1.5 rounded-full',
-												url.status === 'active' ? 'bg-success' : 'bg-muted-foreground'
-											]}
-										></span>{url.status}</span
-									></td
-								>
-								<td class="px-5 py-4 text-center"
-									><span
-										class={[
-											'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium capitalize',
-											url.health === 'healthy'
-												? 'bg-success/10 text-success'
-												: 'bg-muted text-muted-foreground'
-										]}><CircleCheck class="size-3.5" />{url.health}</span
-									></td
-								>
-								<td class="px-5 py-4 text-center text-muted-foreground">{date(url.createdAt)}</td>
-							</tr>{/each}</tbody
-					>
-				</table>
-			</div>
-		{/if}
-	</section>
-</div>
-
-{#if clickURL}
-	<div
-		class="fixed inset-0 z-[80] grid place-items-center bg-black/50 p-4 backdrop-blur-sm"
-		role="presentation"
-		onclick={(event) => event.target === event.currentTarget && closeClicks()}
-	>
-		<div
-			role="dialog"
-			aria-modal="true"
-			aria-labelledby="click-history-title"
-			class="shadow-overlay relative max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-xl border border-border bg-card p-6"
-		>
-			<button
-				type="button"
-				onclick={closeClicks}
-				aria-label="Close click history"
-				class="absolute top-3 right-3 inline-flex size-10 items-center justify-center rounded-full text-muted-foreground hover:bg-muted"
-				><X class="size-5" /></button
-			>
-			<h2 id="click-history-title" class="pr-12 text-2xl font-semibold">Click history</h2>
-			<p class="mt-1 truncate text-sm text-muted-foreground">
-				{clickURL.title || clickURL.originalURL}
-			</p>
-			{#if clickLoading}
-				<div class="flex min-h-48 items-center justify-center gap-2 text-muted-foreground">
-					<LoaderCircle class="size-5 animate-spin" /> Loading clicks…
+				<div class="mt-4 border-t border-border pt-3 text-xs text-muted-foreground">
+					{totalURLs === 0 ? 'No links created yet' : 'Across your account'}
 				</div>
-			{:else if clickError}
-				<p role="alert" class="mt-6 rounded-md bg-destructive/10 p-4 text-sm text-destructive">
-					{clickError}
+			</article>
+			<article class="shadow-micro h-44 rounded-xl border border-border bg-card p-5">
+				<p class="text-label-caps font-semibold tracking-wider text-muted-foreground uppercase">
+					Total Clicks
 				</p>
-			{:else if clickData}
-				<div class="mt-6 overflow-x-auto rounded-lg border border-border">
-					<table class="w-full min-w-[760px] text-sm">
+				<div class="mt-3 flex items-baseline gap-3">
+					<p class="text-3xl font-semibold tracking-tight">
+						{totalClicks === undefined ? '—' : number(totalClicks)}
+					</p>
+				</div>
+				{#if data.clickCounts}
+					<svg
+						class="mt-2 h-12 w-full overflow-visible"
+						viewBox="0 0 600 96"
+						preserveAspectRatio="none"
+						role="img"
+						aria-label="Clicks during the last seven days"
+					>
+						<defs>
+							<linearGradient id="click-area" x1="0" y1="0" x2="0" y2="1">
+								<stop offset="0%" stop-color="var(--primary)" stop-opacity="0.22" />
+								<stop offset="100%" stop-color="var(--primary)" stop-opacity="0.02" />
+							</linearGradient>
+						</defs>
+						<path d={clickChart.area} fill="url(#click-area)" />
+						<path
+							d={clickChart.line}
+							fill="none"
+							stroke="var(--primary)"
+							stroke-width="4"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							vector-effect="non-scaling-stroke"
+						/>
+						{#each clickChart.points as point (point.key)}
+							<circle cx={point.x} cy={point.y} r="8" fill="transparent">
+								<title>{point.date}: {point.count} {point.count === 1 ? 'click' : 'clicks'}</title>
+							</circle>
+						{/each}
+					</svg>
+					<p class="text-xs text-muted-foreground">
+						Last {data.clickCounts.days} days · all links
+					</p>
+				{:else}<p role="alert" class="mt-4 text-sm text-destructive">
+						{data.clickCountsError}
+					</p>{/if}
+			</article>
+			<article
+				class="shadow-micro h-44 rounded-xl border border-border bg-card p-5 sm:col-span-2 xl:col-span-1"
+			>
+				<p class="text-label-caps font-semibold tracking-wider text-muted-foreground uppercase">
+					Active Links
+				</p>
+				<div class="mt-3 flex items-baseline gap-2">
+					<p class="text-3xl font-semibold tracking-tight">
+						{activeLinks === undefined ? '—' : number(activeLinks)}
+					</p>
+					<p class="text-body-sm text-muted-foreground">
+						/ {totalURLs === undefined ? '—' : number(totalURLs)}
+					</p>
+				</div>
+				<div class="mt-4 flex gap-1" aria-hidden="true">
+					{#each [0, 1, 2, 3, 4] as segment (segment)}<span
+							class={[
+								'h-2 flex-1 first:rounded-l-full last:rounded-r-full',
+								segment < Math.ceil(((activeLinks ?? 0) / Math.max(totalURLs ?? 0, 1)) * 5)
+									? 'bg-success'
+									: 'bg-muted'
+							]}
+						></span>{/each}
+				</div>
+			</article>
+		</section>
+
+		<section
+			class="shadow-micro relative overflow-hidden rounded-xl border border-border bg-card p-6 sm:p-8"
+		>
+			<form
+				class="relative mx-auto flex max-w-3xl flex-col items-center gap-4"
+				onsubmit={previewShortURL}
+				novalidate
+			>
+				<h1 class="text-2xl font-semibold tracking-tight">Quick Shorten</h1>
+				<div
+					class="shadow-micro flex w-full flex-col gap-2 rounded-lg border border-input bg-background p-1 transition-shadow has-[input:focus-visible]:ring-2 has-[input:focus-visible]:ring-ring/40 sm:flex-row"
+				>
+					<label for="quickURL" class="sr-only">Long URL to preview</label>
+					<input
+						id="quickURL"
+						type="url"
+						required
+						placeholder="Paste your long URL here..."
+						bind:value={quickURL}
+						oninput={() => (quickURLError = '')}
+						aria-invalid={quickURLError ? 'true' : undefined}
+						class="min-h-11 flex-1 bg-transparent px-4 text-sm outline-none placeholder:text-muted-foreground/60"
+					/>
+					<button
+						type="submit"
+						class="inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-md bg-primary px-6 text-sm font-semibold text-primary-foreground transition-all hover:-translate-y-0.5 hover:bg-primary/90 active:translate-y-0 active:scale-95 disabled:opacity-60"
+					>
+						<LinkIcon class="size-4" />Shorten
+					</button>
+				</div>
+				<p class="text-xs text-muted-foreground">
+					Preview only — this does not create or save a link.
+				</p>
+				{#if quickPreview}<p
+						role="status"
+						class="rounded-md bg-primary/5 px-4 py-2 font-mono text-sm text-primary"
+					>
+						Example: {quickPreview}
+					</p>{/if}
+			</form>
+		</section>
+
+		<section class="flex flex-col gap-4">
+			<div class="flex items-center justify-between">
+				<h2 class="text-2xl font-semibold tracking-tight">Recent URLs</h2>
+				<a
+					href={resolve('/my-links')}
+					class="inline-flex items-center gap-1 text-label-caps font-semibold tracking-wide text-primary uppercase"
+					>View all <ArrowRight class="size-4" /></a
+				>
+			</div>
+			{#if data.loadError}
+				<div
+					class="rounded-xl border border-destructive/30 bg-destructive/5 p-6 text-sm text-destructive"
+					role="alert"
+				>
+					{data.loadError}
+				</div>
+			{:else if data.urls.length === 0}
+				<div class="rounded-xl border border-dashed border-border bg-card p-10 text-center">
+					<LinkIcon class="mx-auto size-8 text-muted-foreground" />
+					<h3 class="mt-3 font-semibold">No shortened URLs yet</h3>
+					<p class="mt-1 text-sm text-muted-foreground">
+						Paste your first URL above to get started.
+					</p>
+				</div>
+			{:else}
+				<div class="shadow-micro overflow-x-auto rounded-xl border border-border bg-card">
+					<table class="w-full min-w-[820px] border-collapse text-center text-sm">
 						<thead
-							><tr class="border-b border-border bg-muted/30"
-								><th scope="col" class="px-4 py-3 text-left">Clicked at</th><th
-									scope="col"
-									class="px-4 py-3 text-left">Browser</th
-								><th scope="col" class="px-4 py-3 text-left">Device</th><th
-									scope="col"
-									class="px-4 py-3 text-left">Referrer</th
-								><th scope="col" class="px-4 py-3 text-left">IP address</th></tr
+							><tr
+								class="border-b border-border bg-muted/30 text-label-caps tracking-wider text-muted-foreground uppercase"
+								><th class="px-5 py-4 text-left font-medium">Title / Original URL</th><th
+									class="px-5 py-4 text-center font-medium">Short Code</th
+								><th class="px-5 py-4 text-center font-medium">Clicks</th><th
+									class="px-5 py-4 text-center font-medium">Status</th
+								><th class="px-5 py-4 text-center font-medium">Health</th><th
+									class="px-5 py-4 text-center font-medium">Created At</th
+								></tr
 							></thead
 						>
 						<tbody class="divide-y divide-border"
-							>{#each clickData.clicks as click (click.id)}<tr
-									><td class="px-4 py-3">{date(click.clickedAt)}</td><td class="px-4 py-3"
-										>{click.browser}</td
-									><td class="px-4 py-3">{click.deviceType}</td><td
-										class="max-w-52 truncate px-4 py-3"
-										title={click.referrer}>{click.referrer}</td
-									><td class="px-4 py-3 font-mono text-xs">{click.ipAddress}</td></tr
-								>{/each}{#if clickData.clicks.length === 0}<tr
-									><td colspan="5" class="px-4 py-10 text-center text-muted-foreground"
-										>No click activity is available for this URL.</td
-									></tr
-								>{/if}</tbody
+							>{#each recentURLs as url (url.id)}<tr class="transition-colors hover:bg-muted/35">
+									<td class="max-w-82.5 px-5 py-4 text-left"
+										><p class="truncate font-medium">{url.title || 'Untitled link'}</p>
+										<p class="mt-1 truncate text-xs text-muted-foreground">{url.originalURL}</p></td
+									>
+									<td class="px-5 py-4 text-center"
+										><span class="rounded bg-primary/5 px-2 py-1 font-mono text-xs text-primary"
+											>{shortLabel(url.shortURL, url.shortCode)}</span
+										></td
+									>
+									<td class="px-5 py-4 text-center font-mono">
+										<button
+											type="button"
+											onclick={() => goto(resolve('/my-links/[id]/analytics', { id: url.id }))}
+											class="rounded-md px-3 py-2 text-primary hover:bg-primary/10"
+											aria-label={`View ${url.clicks} clicks for ${url.title || url.shortCode}`}
+											>{number(url.clicks)}</button
+										>
+									</td>
+									<td class="px-5 py-4 text-center"
+										><span
+											class={[
+												'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium capitalize',
+												url.status === 'active'
+													? 'bg-success/10 text-success'
+													: 'bg-muted text-muted-foreground'
+											]}
+											><span
+												class={[
+													'size-1.5 rounded-full',
+													url.status === 'active' ? 'bg-success' : 'bg-muted-foreground'
+												]}
+											></span>{url.status}</span
+										></td
+									>
+									<td class="px-5 py-4 text-center"
+										><span
+											class={[
+												'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium capitalize',
+												url.health === 'healthy'
+													? 'bg-success/10 text-success'
+													: 'bg-muted text-muted-foreground'
+											]}><CircleCheck class="size-3.5" />{url.health}</span
+										></td
+									>
+									<td class="px-5 py-4 text-center text-muted-foreground">{date(url.createdAt)}</td>
+								</tr>{/each}</tbody
 						>
 					</table>
 				</div>
-				<div class="mt-4">
-					<Pagination
-						page={clickData.page}
-						totalItems={clickData.total}
-						itemsPerPage={clickData.perPage}
-						onpagechange={(nextPage) => openClicks(clickURL!, nextPage)}
-					/>
-				</div>
 			{/if}
-		</div>
+		</section>
 	</div>
+
+	{#if clickURL}
+		<div
+			class="fixed inset-0 z-[80] grid place-items-center bg-black/50 p-4 backdrop-blur-sm"
+			role="presentation"
+			onclick={(event) => event.target === event.currentTarget && closeClicks()}
+		>
+			<div
+				role="dialog"
+				aria-modal="true"
+				aria-labelledby="click-history-title"
+				class="shadow-overlay relative max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-xl border border-border bg-card p-6"
+			>
+				<button
+					type="button"
+					onclick={closeClicks}
+					aria-label="Close click history"
+					class="absolute top-3 right-3 inline-flex size-10 items-center justify-center rounded-full text-muted-foreground hover:bg-muted"
+					><X class="size-5" /></button
+				>
+				<h2 id="click-history-title" class="pr-12 text-2xl font-semibold">Click history</h2>
+				<p class="mt-1 truncate text-sm text-muted-foreground">
+					{clickURL.title || clickURL.originalURL}
+				</p>
+				{#if clickLoading}
+					<div class="flex min-h-48 items-center justify-center gap-2 text-muted-foreground">
+						<LoaderCircle class="size-5 animate-spin" /> Loading clicks…
+					</div>
+				{:else if clickError}
+					<p role="alert" class="mt-6 rounded-md bg-destructive/10 p-4 text-sm text-destructive">
+						{clickError}
+					</p>
+				{:else if clickData}
+					<div class="mt-6 overflow-x-auto rounded-lg border border-border">
+						<table class="w-full min-w-[760px] text-sm">
+							<thead
+								><tr class="border-b border-border bg-muted/30"
+									><th scope="col" class="px-4 py-3 text-left">Clicked at</th><th
+										scope="col"
+										class="px-4 py-3 text-left">Browser</th
+									><th scope="col" class="px-4 py-3 text-left">Device</th><th
+										scope="col"
+										class="px-4 py-3 text-left">Referrer</th
+									><th scope="col" class="px-4 py-3 text-left">IP address</th></tr
+								></thead
+							>
+							<tbody class="divide-y divide-border"
+								>{#each clickData.clicks as click (click.id)}<tr
+										><td class="px-4 py-3">{date(click.clickedAt)}</td><td class="px-4 py-3"
+											>{click.browser}</td
+										><td class="px-4 py-3">{click.deviceType}</td><td
+											class="max-w-52 truncate px-4 py-3"
+											title={click.referrer}>{click.referrer}</td
+										><td class="px-4 py-3 font-mono text-xs">{click.ipAddress}</td></tr
+									>{/each}{#if clickData.clicks.length === 0}<tr
+										><td colspan="5" class="px-4 py-10 text-center text-muted-foreground"
+											>No click activity is available for this URL.</td
+										></tr
+									>{/if}</tbody
+							>
+						</table>
+					</div>
+					<div class="mt-4">
+						<Pagination
+							page={clickData.page}
+							totalItems={clickData.total}
+							itemsPerPage={clickData.perPage}
+							onpagechange={(nextPage) => openClicks(clickURL!, nextPage)}
+						/>
+					</div>
+				{/if}
+			</div>
+		</div>
+	{/if}
 {/if}
 
 {#if createOpen}

@@ -17,6 +17,8 @@
 	let scheduling = $state(false);
 	let restoring = $state(false);
 	let confirmingDeletion = $state(false);
+	let deletionConfirmation = $state('');
+	let deletionAttempted = $state(false);
 	let changingPassword = $state(false);
 	let currentPassword = $state('');
 	let newPassword = $state('');
@@ -36,6 +38,7 @@
 			passwordIsDifferent
 	);
 	const pendingDeletion = $derived(data.user?.status?.toUpperCase() === 'PENDING_DELETION');
+	const deletionConfirmed = $derived(deletionConfirmation === 'delete my account');
 
 	function accountAction(setBusy: (busy: boolean) => void, fallback: string): SubmitFunction {
 		return () => {
@@ -57,7 +60,12 @@
 		};
 	}
 
-	const scheduleDeletion: SubmitFunction = () => {
+	const scheduleDeletion: SubmitFunction = ({ cancel }) => {
+		deletionAttempted = true;
+		if (!deletionConfirmed) {
+			cancel();
+			return;
+		}
 		scheduling = true;
 		return async ({ result, update }) => {
 			try {
@@ -95,8 +103,8 @@
 </script>
 
 <svelte:head>
-	<title>Account Settings | Linkflow</title>
-	<meta name="description" content="Manage your Linkflow account and security preferences." />
+	<title>Account Settings | Linkpluse</title>
+	<meta name="description" content="Manage your Linkpluse account and security preferences." />
 </svelte:head>
 
 <section class="mx-auto max-w-3xl space-y-6" aria-labelledby="settings-heading">
@@ -372,6 +380,7 @@
 						<form
 							method="POST"
 							action="?/scheduleDeletion"
+							novalidate
 							class="rounded-lg border border-destructive/30 bg-destructive/5 p-4"
 							use:enhance={scheduleDeletion}
 						>
@@ -385,12 +394,23 @@
 							><input
 								id="delete-confirmation"
 								name="confirmation"
-								required
-								pattern="delete my account"
+								bind:value={deletionConfirmation}
+								oninput={() => (deletionAttempted = false)}
+								aria-invalid={deletionAttempted && !deletionConfirmed}
+								aria-describedby="delete-confirmation-error"
 								autocomplete="off"
 								placeholder="delete my account"
-								class="mt-1.5 h-10 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus-visible:border-destructive focus-visible:ring-3 focus-visible:ring-destructive/20"
+								class="mt-1.5 h-10 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus-visible:border-destructive focus-visible:ring-3 focus-visible:ring-destructive/20 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20"
 							/>
+							{#if deletionAttempted && !deletionConfirmed}
+								<p
+									id="delete-confirmation-error"
+									class="mt-2 text-xs text-destructive"
+									role="alert"
+								>
+									Type “delete my account” exactly to confirm deletion.
+								</p>
+							{/if}
 							<div class="mt-4 flex justify-end gap-3">
 								<button
 									type="button"

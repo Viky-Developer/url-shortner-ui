@@ -36,9 +36,16 @@ export const load: PageServerLoad = async ({ locals, url, fetch }) => {
 		getClickCounts(fetch)
 	]);
 	const urls = urlsResult.status === 'fulfilled' ? urlsResult.value : [];
+	const serviceUnavailable = [urlsResult, countsResult, clicksResult].every(
+		(result) =>
+			result.status === 'rejected' &&
+			result.reason instanceof ShortURLApiError &&
+			result.reason.status === 503
+	);
 
 	return {
 		urls,
+		serviceUnavailable,
 		clickCounts: clicksResult.status === 'fulfilled' ? clicksResult.value : null,
 		clickCountsError: clicksResult.status === 'rejected' ? 'Unable to load total clicks.' : '',
 		statusCounts: countsResult.status === 'fulfilled' ? countsResult.value : undefined,

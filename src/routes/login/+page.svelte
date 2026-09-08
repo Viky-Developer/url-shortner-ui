@@ -104,8 +104,8 @@
 </script>
 
 <svelte:head>
-	<title>Sign In | Linkflow</title>
-	<meta name="description" content="Sign in to manage your Linkflow links and analytics." />
+	<title>Sign In | Linkpluse</title>
+	<meta name="description" content="Sign in to manage your Linkpluse links and analytics." />
 </svelte:head>
 
 <main
@@ -132,7 +132,7 @@
 					</div>
 				</div>
 				<h1 id="login-heading" class="mb-2 text-3xl font-semibold tracking-tight">Sign In</h1>
-				<p class="text-sm text-muted-foreground">Welcome back to Linkflow.</p>
+				<p class="text-sm text-muted-foreground">Welcome back to Linkpluse.</p>
 			</header>
 
 			<form method="POST" class="space-y-6" novalidate use:enhance={enhanceLogin}>

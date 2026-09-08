@@ -97,7 +97,7 @@
 	}
 </script>
 
-<svelte:head><title>Link Analytics | LinkFlow</title></svelte:head>
+<svelte:head><title>Link Analytics | Linkpluse</title></svelte:head>
 <div class="space-y-6" aria-busy={!!navigating.to}>
 	<section class="space-y-6" aria-labelledby="traffic-title">
 		<div class="flex flex-wrap items-center justify-between gap-3">

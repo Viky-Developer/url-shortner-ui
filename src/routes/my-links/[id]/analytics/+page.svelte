@@ -98,7 +98,7 @@
 </script>
 
 <svelte:head>
-	<title>{data.url?.title || data.url?.shortCode || 'URL'} Analytics | Linkflow</title>
+	<title>{data.url?.title || data.url?.shortCode || 'URL'} Analytics | Linkpluse</title>
 </svelte:head>
 
 <div class="mx-auto flex w-full max-w-7xl flex-col gap-6">
