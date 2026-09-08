@@ -12,12 +12,16 @@
 		comparisonData = [],
 		height = 240,
 		showPoints = true,
+		showTooltip = false,
+		seriesLabel = 'Value',
 		class: className
 	}: {
 		data: DataPoint[];
 		comparisonData?: DataPoint[];
 		height?: number;
 		showPoints?: boolean | 'sparse';
+		showTooltip?: boolean;
+		seriesLabel?: string;
 		class?: string;
 	} = $props();
 
@@ -107,6 +111,42 @@
 			{areaPath}
 			mainPoints={visiblePoints}
 		/>
+
+		{#if showTooltip}
+			{#each mainPoints as point, i (`${data[i].label}-${i}`)}
+				<button
+					type="button"
+					class="group absolute top-0 z-10 cursor-crosshair focus-visible:bg-primary/5 focus-visible:outline-none"
+					style:left={`${(i / Math.max(data.length, 1)) * 100}%`}
+					style:width={`${100 / Math.max(data.length, 1)}%`}
+					style:height={`${height}px`}
+					aria-label={`${data[i].label}: ${data[i].value.toLocaleString()} ${seriesLabel}`}
+				>
+					<span
+						class="absolute top-0 bottom-7 left-1/2 border-l border-dashed border-primary/40 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100"
+					></span>
+					<span
+						class="absolute left-1/2 size-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary opacity-0 ring-4 ring-primary/15 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100"
+						style:top={`${point.y}px`}
+					></span>
+					<span
+						class={[
+							'pointer-events-none absolute z-20 hidden min-w-36 -translate-y-[calc(100%+0.5rem)] rounded-lg border border-border bg-popover p-3 text-left text-popover-foreground shadow-lg group-hover:block group-focus-visible:block',
+							i === 0 ? 'left-0' : i === data.length - 1 ? 'right-0' : 'left-1/2 -translate-x-1/2'
+						]}
+						style:top={`${point.y}px`}
+					>
+						<span class="block text-xs font-semibold">{data[i].label}</span>
+						<span class="mt-2 flex items-center justify-between gap-4 text-xs">
+							<span class="flex items-center gap-1.5 text-muted-foreground"
+								><span class="size-2 rounded-full bg-primary"></span>{seriesLabel}</span
+							>
+							<span class="font-mono font-semibold">{data[i].value.toLocaleString()}</span>
+						</span>
+					</span>
+				</button>
+			{/each}
+		{/if}
 
 		<div
 			class="text-on-surface-variant absolute right-0 bottom-0 left-0 flex justify-between font-mono text-[10px]"

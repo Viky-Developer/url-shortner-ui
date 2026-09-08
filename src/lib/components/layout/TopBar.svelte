@@ -19,9 +19,11 @@
 	const pageTitle = $derived.by(() => {
 		if (page.url.pathname.startsWith('/sessions')) return 'Sessions';
 		if (page.url.pathname.startsWith('/analytics')) return 'Link Analytics';
+		if (/^\/my-links\/[^/]+\/analytics\/?$/.test(page.url.pathname)) return 'URL Analytics';
 		if (page.url.pathname.startsWith('/my-links')) return 'My Links';
 		if (page.url.pathname.startsWith('/dashboard')) return `Welcome, ${userName}`;
 		if (page.url.pathname.startsWith('/settings')) return 'Settings';
+		if (page.url.pathname.startsWith('/admin')) return 'Admin Control Panel';
 		return 'Linkflow';
 	});
 </script>

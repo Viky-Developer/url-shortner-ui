@@ -210,9 +210,16 @@ export async function listURLClicks(
 	fetcher: typeof fetch,
 	id: string,
 	page = 1,
-	perPage = 7
+	perPage = 7,
+	range?: { from: string; to: string }
 ): Promise<ClickLogPage> {
-	return fetchClickLogPage(fetcher, `${URLS_PATH}/${encodeURIComponent(id)}/clicks`, page, perPage);
+	return fetchClickLogPage(
+		fetcher,
+		`${URLS_PATH}/${encodeURIComponent(id)}/clicks`,
+		page,
+		perPage,
+		range
+	);
 }
 
 export function listAllURLClicks(
