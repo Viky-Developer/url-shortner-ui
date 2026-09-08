@@ -272,7 +272,7 @@
 </script>
 
 <svelte:head>
-	<title>My Links | Linkflow</title>
+	<title>My Links | Linkpluse</title>
 	<meta name="description" content="Review and update your shortened URLs." />
 </svelte:head>
 

@@ -72,7 +72,7 @@
 </script>
 
 <svelte:head
-	><title>Sessions · Linkflow</title><meta
+	><title>Sessions · Linkpluse</title><meta
 		name="description"
 		content="Review your signed-in devices and manage account sessions."
 	/></svelte:head

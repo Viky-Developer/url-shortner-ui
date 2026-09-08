@@ -28,6 +28,7 @@ test-results
 /.opencode
 
 # GitNexus
+/.gitnexus/
 /.claude
 /AGENTS.md
 /CLAUDE.md

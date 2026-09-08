@@ -24,7 +24,7 @@
 		if (page.url.pathname.startsWith('/dashboard')) return `Welcome, ${userName}`;
 		if (page.url.pathname.startsWith('/settings')) return 'Settings';
 		if (page.url.pathname.startsWith('/admin')) return 'Admin Control Panel';
-		return 'Linkflow';
+		return 'Linkpluse';
 	});
 </script>
 

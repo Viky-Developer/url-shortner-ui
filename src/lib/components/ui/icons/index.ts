@@ -1,5 +1,6 @@
 export { default as ArrowRight } from '@lucide/svelte/icons/arrow-right';
 export { default as Bell } from '@lucide/svelte/icons/bell';
+export { default as BrandLogo } from './BrandLogo.svelte';
 export { default as Calendar } from '@lucide/svelte/icons/calendar';
 export { default as ChevronDown } from '@lucide/svelte/icons/chevron-down';
 export { default as ChevronLeft } from '@lucide/svelte/icons/chevron-left';

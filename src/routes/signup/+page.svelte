@@ -105,10 +105,10 @@
 </script>
 
 <svelte:head>
-	<title>Create Account | Linkflow</title>
+	<title>Create Account | Linkpluse</title>
 	<meta
 		name="description"
-		content="Create your Linkflow account to manage shortened links and analytics."
+		content="Create your Linkpluse account to manage shortened links and analytics."
 	/>
 </svelte:head>
 

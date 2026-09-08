@@ -2,6 +2,7 @@
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import {
+		BrandLogo,
 		ChartNoAxesColumn,
 		LayoutDashboard,
 		LinkIcon,
@@ -173,8 +174,8 @@
 			class="flex w-fit items-center gap-3 rounded-md focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar focus-visible:outline-none"
 			aria-label="Go to Dashboard"
 		>
-			<LinkIcon class="size-7 text-sidebar-primary" />
-			<span class="text-xl font-semibold tracking-tight text-sidebar-foreground">Linkflow</span>
+			<BrandLogo class="size-8 shrink-0" />
+			<span class="text-xl font-semibold tracking-tight text-sidebar-foreground">Linkpluse</span>
 		</a>
 	</div>
 
@@ -273,8 +274,8 @@
 			onclick={onclose}
 			aria-label="Go to Dashboard"
 		>
-			<LinkIcon class="size-7 text-sidebar-primary" />
-			<span class="text-xl font-semibold tracking-tight text-sidebar-foreground">Linkflow</span>
+			<BrandLogo class="size-8 shrink-0" />
+			<span class="text-xl font-semibold tracking-tight text-sidebar-foreground">Linkpluse</span>
 		</a>
 		<button
 			class="inline-flex size-8 items-center justify-center rounded-md text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:outline-none"
