@@ -9,6 +9,29 @@
 		/>
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<meta name="text-scale" content="scale" />
+		<style>
+			html {
+				background: #fbf8ff;
+			}
+			html.dark {
+				background: #13121b;
+				color-scheme: dark;
+			}
+		</style>
+		<script>
+			try {
+				const authRoute = /^\/(?:login|signup)\/?$/.test(window.location.pathname);
+				const savedTheme = window.localStorage.getItem('theme');
+				const dark =
+					!authRoute &&
+					(savedTheme
+						? savedTheme === 'dark'
+						: window.matchMedia('(prefers-color-scheme: dark)').matches);
+				document.documentElement.classList.toggle('dark', dark);
+			} catch {
+				// Hydration applies the system preference if storage is unavailable.
+			}
+		</script>
 		<title>Linkflow</title>
 		%sveltekit.head%
 	</head>

@@ -27,7 +27,7 @@ if ! [[ "$branch" =~ ^(feat|refactor|bug|fix|chore|hotfix)/.+ ]]; then
   echo "  hotfix/<name>   - urgent production fixes" >&2
   echo "  chore/<name>    - maintenance tasks" >&2
   echo "" >&2
-  echo "create a properly named branch, e.g.: git checkout -b feat/your-branch-name" >&2
-  echo "or use: make branch type=feat name=your-branch-name" >&2
+  echo "create a properly named branch, e.g.: git checkout -b feat/github_issue_no-your-branch-name" >&2
+  echo "or use: make branch type=feat issue=github_issue_no name=your-branch-name" >&2
   exit 1
 fi

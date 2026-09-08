@@ -8,6 +8,7 @@
 		LogOut,
 		LockKeyhole,
 		Settings,
+		ShieldCheck,
 		X
 	} from '$lib/components/ui/icons';
 	import { Popover, PopoverContent, PopoverTrigger } from '$lib/components/ui/popover';
@@ -30,6 +31,7 @@
 	const userInitial = $derived(userName.charAt(0).toUpperCase());
 	const userRole = $derived(formatRole(user?.role));
 	const userId = $derived(user?.id || 'unavailable');
+	const isAdmin = $derived(user?.role?.trim().toUpperCase() === 'ADMIN');
 
 	function formatRole(role: string | undefined): string {
 		if (!role?.trim()) return 'MEMBER';
@@ -45,6 +47,7 @@
 	];
 
 	const bottomNav = [{ href: resolve('/settings'), label: 'Settings', icon: Settings }];
+	const adminNav = { href: resolve('/admin'), label: 'Admin', icon: ShieldCheck };
 
 	interface IndicatorPosition {
 		top: number;
@@ -220,6 +223,22 @@
 				<span>{link.label}</span>
 			</a>
 		{/each}
+
+		{#if isAdmin}
+			<a
+				href={adminNav.href}
+				aria-current={isNavActive(adminNav.href) ? 'page' : undefined}
+				class={[
+					'flex h-11 items-center gap-3 rounded-lg px-4 text-sm transition-all duration-200 ease-out',
+					isNavActive(adminNav.href)
+						? 'bg-sidebar-accent text-sidebar-primary'
+						: 'text-sidebar-foreground/70 hover:translate-x-0.5 hover:bg-sidebar-accent/70 hover:text-sidebar-foreground'
+				]}
+			>
+				<adminNav.icon class="size-5 shrink-0" />
+				<span>{adminNav.label}</span>
+			</a>
+		{/if}
 	</nav>
 
 	<div class="mouse-poi mt-auto border-t border-sidebar-border p-4">
@@ -313,6 +332,23 @@
 				<span>{link.label}</span>
 			</a>
 		{/each}
+
+		{#if isAdmin}
+			<a
+				href={adminNav.href}
+				aria-current={isNavActive(adminNav.href) ? 'page' : undefined}
+				class={[
+					'flex h-11 items-center gap-3 rounded-lg px-4 text-sm transition-all duration-200 ease-out',
+					isNavActive(adminNav.href)
+						? 'bg-sidebar-accent text-sidebar-primary'
+						: 'text-sidebar-foreground/70 hover:translate-x-0.5 hover:bg-sidebar-accent/70 hover:text-sidebar-foreground'
+				]}
+				onclick={onclose}
+			>
+				<adminNav.icon class="size-5 shrink-0" />
+				<span>{adminNav.label}</span>
+			</a>
+		{/if}
 	</nav>
 
 	<div class="mt-auto border-t border-sidebar-border p-4">
