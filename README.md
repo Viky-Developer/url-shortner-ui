@@ -1,6 +1,6 @@
 # Linkpluse UI
 
-Linkpluse is a SvelteKit web application for creating, managing, and monitoring shortened URLs. It includes account authentication, link lifecycle controls, click analytics, session management, administrative security controls, responsive light and dark themes, and custom service-unavailable states.
+Linkpluse is a SvelteKit web application for creating, managing, and monitoring shortened URLs. It includes account authentication, link lifecycle controls, click analytics, session management, administrative security controls, responsive appearance preferences, and custom service-unavailable states.
 
 ## Features
 
@@ -10,7 +10,7 @@ Linkpluse is a SvelteKit web application for creating, managing, and monitoring 
 - Manage account security, active sessions, password changes, and scheduled account deletion
 - Administer users, blocked domains, blocked IP ranges, and security-data retention
 - Recover gracefully when the API is unavailable
-- Use an accessible responsive interface with light and dark themes
+- Switch instantly between light, dark, and system-matched themes from Account Settings
 
 ## Technology
 
@@ -70,6 +70,10 @@ Linkpluse is a SvelteKit web application for creating, managing, and monitoring 
 | `AUTH_COOKIE_SECURE`   | No       | Production-aware | Set to `false` only for local HTTP development                                  |
 
 Never commit `.env` or production secrets. See [`.env.example`](.env.example) for a safe template.
+
+## Appearance
+
+Account Settings provides Light, Dark, and System theme options. Theme changes apply immediately. Light and Dark preferences persist in local storage, while System follows the operating system's current color-scheme preference.
 
 ## Commands
 
