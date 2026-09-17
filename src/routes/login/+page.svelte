@@ -274,6 +274,15 @@
 				</Button>
 			</form>
 
+			<p class="mt-4 text-center text-body-sm">
+				<a
+					class="border-b border-transparent font-medium text-primary transition-colors hover:border-primary hover:text-primary/90"
+					href={resolve('/forgot-password')}
+				>
+					Forgot your password?
+				</a>
+			</p>
+
 			<p class="mt-6 text-center text-body-sm text-muted-foreground">
 				Need an account?
 				<a

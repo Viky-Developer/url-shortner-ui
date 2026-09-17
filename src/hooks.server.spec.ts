@@ -76,12 +76,15 @@ async function runHandle(event: RequestEvent, resolve = vi.fn(async () => new Re
 }
 
 describe('authentication middleware', () => {
-	it.each(['/login', '/signup'])('allows public %s requests without tokens', async (pathname) => {
-		const { response, resolve } = await runHandle(createEvent(pathname));
+	it.each(['/login', '/signup', '/forgot-password'])(
+		'allows public %s requests without tokens',
+		async (pathname) => {
+			const { response, resolve } = await runHandle(createEvent(pathname));
 
-		expect(response.status).toBe(200);
-		expect(resolve).toHaveBeenCalledOnce();
-	});
+			expect(response.status).toBe(200);
+			expect(resolve).toHaveBeenCalledOnce();
+		}
+	);
 
 	it('allows a protected route with a usable access token', async () => {
 		const now = Math.floor(Date.now() / 1000);

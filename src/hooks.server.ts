@@ -15,7 +15,7 @@ import {
 } from '$lib/server/auth-cookies';
 
 const LOGIN_PATH = '/login';
-const PUBLIC_PATHS = new Set([LOGIN_PATH, '/signup']);
+const PUBLIC_PATHS = new Set([LOGIN_PATH, '/signup', '/forgot-password']);
 const PUBLIC_PREFIXES = ['/demo/'];
 
 export function isPublicPath(pathname: string): boolean {

@@ -3,6 +3,7 @@ import type {
 	AuthResponse,
 	AuthTokens,
 	ChangePasswordRequest,
+	ForgotPasswordRequest,
 	LoginRequest,
 	RegisterRequest,
 	UserResponse
@@ -13,6 +14,7 @@ const LOGIN_PATH = '/auth/login';
 const REFRESH_PATH = '/auth/refresh';
 const LOGOUT_PATH = '/auth/logout';
 const CHANGE_PASSWORD_PATH = '/auth/change-password';
+const FORGOT_PASSWORD_PATH = '/auth/forgot-password';
 
 export class AuthApiError extends Error {
 	constructor(
@@ -282,6 +284,37 @@ export async function changePassword(
 
 	if (!response.ok) {
 		let message = 'Unable to change your password. Please try again.';
+		try {
+			message = getErrorMessage(await response.json()) || message;
+		} catch {
+			// Keep the safe fallback when the backend does not return JSON.
+		}
+		throw new AuthApiError(message, response.status);
+	}
+}
+
+export async function requestPasswordReset(
+	fetcher: typeof globalThis.fetch,
+	request: ForgotPasswordRequest
+): Promise<void> {
+	const backendUrl = getBackendUrl();
+	let response: Response;
+
+	try {
+		response = await fetcher(`${backendUrl}${FORGOT_PASSWORD_PATH}`, {
+			method: 'POST',
+			headers: {
+				accept: 'application/json',
+				'content-type': 'application/json'
+			},
+			body: JSON.stringify(request)
+		});
+	} catch {
+		throw new AuthApiError('The password reset service is unavailable. Please try again.', 503);
+	}
+
+	if (!response.ok) {
+		let message = 'Unable to request a password reset. Please try again.';
 		try {
 			message = getErrorMessage(await response.json()) || message;
 		} catch {

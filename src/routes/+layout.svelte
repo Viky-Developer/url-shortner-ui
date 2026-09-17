@@ -52,7 +52,9 @@
 			sidebarOpen = true;
 		}
 	}
-	const isAuthRoute = $derived(['/login', '/signup'].includes(page.url.pathname));
+	const isAuthRoute = $derived(
+		['/login', '/signup', '/forgot-password'].includes(page.url.pathname)
+	);
 	const pendingDeletion = $derived(data.user?.status?.toUpperCase() === 'PENDING_DELETION');
 
 	$effect(() => {

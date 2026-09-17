@@ -197,9 +197,9 @@
 				<Card class="border-primary/10 bg-linear-to-br from-card to-primary/5">
 					<CardHeader class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
 						<div>
-							<CardTitle class="text-xl">Click &amp; Visitor Performance</CardTitle>
+							<CardTitle class="text-xl">Cumulative Click Performance</CardTitle>
 							<p class="mt-1 text-xs text-muted-foreground">
-								Daily click volume over the selected period
+								Running click total over the selected period
 							</p>
 						</div>
 						<div class="flex flex-wrap gap-4 text-xs font-medium">
@@ -220,7 +220,7 @@
 									height={300}
 									showPoints="sparse"
 									showTooltip
-									seriesLabel="clicks"
+									seriesLabel="Total clicks"
 								/>
 							</div>{:else}<p class="py-24 text-center text-sm text-muted-foreground">
 								No clicks in this period.
