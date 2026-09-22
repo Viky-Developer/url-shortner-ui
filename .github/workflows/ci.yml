@@ -26,10 +26,24 @@ jobs:
           EVENT_NAME: ${{ github.event_name }}
           HEAD_REF: ${{ github.head_ref }}
         run: |
-          if [[ "$EVENT_NAME" == "pull_request" && "$BASE_REF" == "main" && ! "$HEAD_REF" =~ ^(hotfix|release)/ ]]; then
-            echo "::error::Pull requests into main must come from a hotfix/* or release/* branch."
-            exit 1
+          if [[ "$EVENT_NAME" != "pull_request" ]]; then
+            exit 0
           fi
+
+          case "$BASE_REF:$HEAD_REF" in
+            main:hotfix/*|main:release/*)
+              ;;
+            dev:bug/*|dev:fix/*|dev:chore/*|dev:refactor/*|dev:feat/*)
+              ;;
+            main:*)
+              echo "::error::Pull requests into main must come from a hotfix/* or release/* branch."
+              exit 1
+              ;;
+            dev:*)
+              echo "::error::Pull requests into dev must come from a bug/*, fix/*, chore/*, refactor/*, or feat/* branch."
+              exit 1
+              ;;
+          esac
 
   lint:
     name: lint
