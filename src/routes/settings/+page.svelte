@@ -170,7 +170,7 @@
 	</section>
 
 	<section class="rounded-xl border border-border bg-card p-6" aria-labelledby="appearance-heading">
-		<div class="flex items-center justify-between gap-5">
+		<div class="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
 			<div class="flex gap-3">
 				<span
 					class="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary"
@@ -178,10 +178,12 @@
 				>
 				<div>
 					<h2 id="appearance-heading" class="font-semibold text-foreground">Appearance</h2>
-					<p class="mt-1 text-xs text-muted-foreground">Switch between light and dark themes.</p>
+					<p class="mt-1 text-xs text-muted-foreground">
+						Choose a light, dark, or system-matched theme.
+					</p>
 				</div>
 			</div>
-			<ThemeToggle class="shrink-0" />
+			<ThemeToggle class="w-full shrink-0 sm:w-auto" />
 		</div>
 	</section>
 

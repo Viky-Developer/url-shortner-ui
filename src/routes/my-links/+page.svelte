@@ -421,13 +421,15 @@
 								</td>
 								<td class="px-5 py-4 text-right">
 									<div class="flex justify-end gap-2">
-										<a
-											href={resolve('/my-links/[id]/analytics', { id: url.id })}
-											class="inline-flex h-9 items-center gap-2 rounded-md border border-primary/30 bg-primary/10 px-3 font-medium text-primary transition-all hover:-translate-y-0.5 hover:bg-primary/15 hover:shadow-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-											aria-label={`View analytics for ${url.title || url.shortCode}`}
-										>
-											<ChartNoAxesColumn class="size-4" /> Analytics
-										</a>
+										{#if statusFor(url) !== 'deleted'}
+											<a
+												href={resolve('/my-links/[id]/analytics', { id: url.id })}
+												class="inline-flex h-9 items-center gap-2 rounded-md border border-primary/30 bg-primary/10 px-3 font-medium text-primary transition-all hover:-translate-y-0.5 hover:bg-primary/15 hover:shadow-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+												aria-label={`View analytics for ${url.title || url.shortCode}`}
+											>
+												<ChartNoAxesColumn class="size-4" /> Analytics
+											</a>
+										{/if}
 										<button
 											type="button"
 											disabled={['expired', 'deleted'].includes(statusFor(url))}

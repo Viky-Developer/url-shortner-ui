@@ -1,73 +1,70 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import Monitor from '@lucide/svelte/icons/monitor';
 	import { Moon, Sun } from '$lib/components/ui/icons';
 	import { cn } from '$lib/utils.js';
 
 	let { class: className }: { class?: string } = $props();
 
-	let dark = $state(false);
-	let transitionTimer: ReturnType<typeof setTimeout> | undefined;
-	const themeTransitionDuration = 100;
+	type Theme = 'light' | 'dark' | 'system';
 
-	function toggle() {
-		const root = document.documentElement;
-		clearTimeout(transitionTimer);
-		if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-			root.classList.add('theme-changing');
-			// Apply transition styles before changing the palette.
-			void root.offsetWidth;
-			transitionTimer = setTimeout(
-				() => root.classList.remove('theme-changing'),
-				themeTransitionDuration + 50
-			);
-		} else {
-			root.classList.remove('theme-changing');
-		}
-		dark = !dark;
-		apply(dark);
-		localStorage.setItem('theme', dark ? 'dark' : 'light');
+	let theme = $state<Theme>('system');
+	const themes = [
+		{ value: 'light' as const, label: 'Light', icon: Sun },
+		{ value: 'dark' as const, label: 'Dark', icon: Moon },
+		{ value: 'system' as const, label: 'System', icon: Monitor }
+	];
+
+	function selectTheme(nextTheme: Theme) {
+		theme = nextTheme;
+		if (theme === 'system') localStorage.removeItem('theme');
+		else localStorage.setItem('theme', theme);
+		applyTheme();
 	}
 
-	function apply(isDark: boolean) {
-		document.documentElement.classList.toggle('dark', isDark);
+	function applyTheme() {
+		const dark =
+			theme === 'dark' ||
+			(theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+		document.documentElement.classList.toggle('dark', dark);
 	}
 
 	onMount(() => {
 		const saved = localStorage.getItem('theme');
 		const systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
-		if (saved) {
-			dark = saved === 'dark';
-		} else {
-			dark = systemTheme.matches;
-		}
-		apply(dark);
+		theme = saved === 'light' || saved === 'dark' ? saved : 'system';
+		applyTheme();
 
-		function followSystemTheme(event: MediaQueryListEvent) {
-			if (localStorage.getItem('theme')) return;
-			dark = event.matches;
-			apply(dark);
+		function followSystemTheme() {
+			if (theme === 'system') applyTheme();
 		}
 
 		systemTheme.addEventListener('change', followSystemTheme);
 		return () => {
-			clearTimeout(transitionTimer);
 			systemTheme.removeEventListener('change', followSystemTheme);
-			document.documentElement.classList.remove('theme-changing');
 		};
 	});
 </script>
 
-<button
-	onclick={toggle}
-	class={cn(
-		'text-on-surface inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-surface-container transition-colors hover:bg-surface-container-high focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
-		className
-	)}
-	aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'}
+<div
+	role="group"
+	aria-label="Theme preference"
+	class={cn('grid grid-cols-3 gap-1 rounded-xl border border-border bg-muted/60 p-1', className)}
 >
-	{#if dark}
-		<Sun class="size-4" />
-	{:else}
-		<Moon class="size-4" />
-	{/if}
-</button>
+	{#each themes as option (option.value)}
+		<button
+			type="button"
+			onclick={() => selectTheme(option.value)}
+			aria-pressed={theme === option.value}
+			class={[
+				'inline-flex h-9 min-w-20 items-center justify-center gap-2 rounded-lg px-3 text-xs font-medium focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
+				theme === option.value
+					? 'bg-primary text-primary-foreground shadow-sm'
+					: 'text-foreground hover:bg-background hover:text-primary'
+			]}
+		>
+			<option.icon class="size-4" aria-hidden="true" />
+			{option.label}
+		</button>
+	{/each}
+</div>
