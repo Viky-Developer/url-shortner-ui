@@ -1,0 +1,326 @@
+import { env } from '$env/dynamic/private';
+import { describe, expect, it, vi } from 'vitest';
+import {
+	changePassword,
+	loginUser,
+	logoutUser,
+	refreshAccessToken,
+	registerUser,
+	requestPasswordReset
+} from './auth';
+
+function successfulAuthResponse(): Response {
+	return new Response(
+		JSON.stringify({
+			statusCode: 200,
+			message: 'authenticated',
+			data: [
+				{
+					token: {
+						accessToken: 'access-token',
+						refreshToken: 'refresh-token'
+					},
+					user: {
+						id: 'user-id',
+						email: 'user@example.com',
+						displayName: 'Jane',
+						status: 'PENDING_DELETION'
+					}
+				}
+			]
+		}),
+		{ status: 200, headers: { 'content-type': 'application/json' } }
+	);
+}
+
+describe('registerUser', () => {
+	it('posts registration data and returns the typed auth response', async () => {
+		const fetchMock = vi.fn(
+			async () =>
+				new Response(
+					JSON.stringify({
+						statusCode: 201,
+						message: 'user registered',
+						data: [
+							{
+								token: {
+									accessToken: 'access-token',
+									refreshToken: 'refresh-token'
+								},
+								user: {
+									id: 'user-id',
+									email: 'user@example.com',
+									displayName: 'Jane'
+								}
+							}
+						]
+					}),
+					{ status: 201, headers: { 'content-type': 'application/json' } }
+				)
+		);
+
+		const result = await registerUser(fetchMock as typeof fetch, {
+			email: 'user@example.com',
+			password: 'Password1',
+			displayName: 'Jane'
+		});
+
+		expect(result.user.id).toBe('user-id');
+		expect(result.token).toEqual({
+			accessToken: 'access-token',
+			refreshToken: 'refresh-token'
+		});
+		expect(fetchMock).toHaveBeenCalledWith(
+			`${env.APP_ENV}/auth/register`,
+			expect.objectContaining({
+				method: 'POST',
+				body: JSON.stringify({
+					email: 'user@example.com',
+					password: 'Password1',
+					displayName: 'Jane'
+				})
+			})
+		);
+	});
+
+	it('preserves a backend registration error', async () => {
+		const fetchMock = vi.fn(
+			async () =>
+				new Response(JSON.stringify({ message: 'An account already exists for this email.' }), {
+					status: 409,
+					headers: { 'content-type': 'application/json' }
+				})
+		);
+
+		await expect(
+			registerUser(fetchMock as typeof fetch, {
+				email: 'user@example.com',
+				password: 'Password1'
+			})
+		).rejects.toMatchObject({
+			status: 409,
+			message: 'An account already exists for this email.'
+		});
+	});
+
+	it('rejects an invalid successful response', async () => {
+		const fetchMock = vi.fn(
+			async () =>
+				new Response(JSON.stringify({ statusCode: 200, message: 'ok', data: [{ user: {} }] }), {
+					status: 200,
+					headers: { 'content-type': 'application/json' }
+				})
+		);
+
+		await expect(
+			registerUser(fetchMock as typeof fetch, {
+				email: 'user@example.com',
+				password: 'Password1'
+			})
+		).rejects.toMatchObject({
+			status: 502
+		});
+	});
+});
+
+describe('loginUser', () => {
+	it('posts existing credentials and returns the auth response', async () => {
+		const fetchMock = vi.fn(async () => successfulAuthResponse());
+
+		const result = await loginUser(fetchMock as typeof fetch, {
+			email: 'user@example.com',
+			password: 'existing-password'
+		});
+
+		expect(result.token).toEqual({
+			accessToken: 'access-token',
+			refreshToken: 'refresh-token'
+		});
+		expect(result.user.status).toBe('PENDING_DELETION');
+		expect(fetchMock).toHaveBeenCalledWith(
+			`${env.APP_ENV}/auth/login`,
+			expect.objectContaining({
+				method: 'POST',
+				body: JSON.stringify({
+					email: 'user@example.com',
+					password: 'existing-password'
+				})
+			})
+		);
+	});
+
+	it('includes a requested session ID to revoke', async () => {
+		const fetchMock = vi.fn(async () => successfulAuthResponse());
+
+		await loginUser(fetchMock as typeof fetch, {
+			email: 'user@example.com',
+			password: 'existing-password',
+			revokeSessionId: 17
+		});
+
+		expect(fetchMock).toHaveBeenCalledWith(
+			`${env.APP_ENV}/auth/login`,
+			expect.objectContaining({
+				body: JSON.stringify({
+					email: 'user@example.com',
+					password: 'existing-password',
+					revokeSessionId: 17
+				})
+			})
+		);
+	});
+
+	it('preserves the response status for invalid credentials', async () => {
+		const fetchMock = vi.fn(async () =>
+			Response.json({ message: 'invalid credentials' }, { status: 401 })
+		);
+
+		await expect(
+			loginUser(fetchMock as typeof fetch, {
+				email: 'user@example.com',
+				password: 'wrong-password'
+			})
+		).rejects.toMatchObject({ status: 401 });
+	});
+});
+
+describe('refreshAccessToken', () => {
+	it('sends both tokens and unwraps the refreshed token response', async () => {
+		const fetchMock = vi.fn(
+			async () =>
+				new Response(
+					JSON.stringify({
+						statusCode: 200,
+						message: 'token refreshed',
+						data: [
+							{
+								accessToken: 'new-access-token',
+								refreshToken: 'refresh-token'
+							}
+						]
+					}),
+					{ status: 200, headers: { 'content-type': 'application/json' } }
+				)
+		);
+
+		const result = await refreshAccessToken(
+			fetchMock as typeof fetch,
+			'expired-access-token',
+			'refresh-token'
+		);
+
+		expect(result).toEqual({
+			accessToken: 'new-access-token',
+			refreshToken: 'refresh-token'
+		});
+		expect(fetchMock).toHaveBeenCalledWith(
+			`${env.APP_ENV}/auth/refresh`,
+			expect.objectContaining({
+				method: 'POST',
+				headers: expect.objectContaining({
+					authorization: 'Bearer expired-access-token'
+				}),
+				body: JSON.stringify({ refreshToken: 'refresh-token' })
+			})
+		);
+	});
+
+	it('rejects a malformed successful refresh response', async () => {
+		const fetchMock = vi.fn(
+			async () =>
+				new Response(JSON.stringify({ statusCode: 200, data: [{}] }), {
+					status: 200,
+					headers: { 'content-type': 'application/json' }
+				})
+		);
+
+		await expect(
+			refreshAccessToken(fetchMock as typeof fetch, 'access-token', 'refresh-token')
+		).rejects.toMatchObject({ status: 502 });
+	});
+});
+
+describe('logoutUser', () => {
+	it('posts the refresh token to the logout endpoint', async () => {
+		const fetchMock = vi.fn(async () => new Response(null, { status: 204 }));
+
+		await logoutUser(fetchMock as typeof fetch, 'refresh-token');
+
+		expect(fetchMock).toHaveBeenCalledWith(
+			`${env.APP_ENV}/auth/logout`,
+			expect.objectContaining({
+				method: 'POST',
+				headers: expect.objectContaining({
+					accept: 'application/json',
+					'content-type': 'application/json'
+				}),
+				body: JSON.stringify({ refreshToken: 'refresh-token' })
+			})
+		);
+	});
+
+	it('rejects an unsuccessful logout response', async () => {
+		const fetchMock = vi.fn(async () => new Response(null, { status: 401 }));
+
+		await expect(
+			logoutUser(fetchMock as typeof fetch, 'invalid-refresh-token')
+		).rejects.toMatchObject({
+			status: 401,
+			message: 'Unable to sign out from the server.'
+		});
+	});
+});
+
+describe('changePassword', () => {
+	it('posts the current and new passwords to the authenticated endpoint', async () => {
+		const fetchMock = vi.fn(async () => new Response(null, { status: 204 }));
+
+		await changePassword(fetchMock as typeof fetch, {
+			currentPassword: 'Current1',
+			newPassword: 'Different2'
+		});
+
+		expect(fetchMock).toHaveBeenCalledWith(
+			`${env.APP_ENV}/auth/change-password`,
+			expect.objectContaining({
+				method: 'POST',
+				body: JSON.stringify({
+					currentPassword: 'Current1',
+					newPassword: 'Different2'
+				})
+			})
+		);
+	});
+});
+
+describe('requestPasswordReset', () => {
+	it('posts the email and new password to the public forgot-password endpoint', async () => {
+		const fetchMock = vi.fn(async () => new Response(null, { status: 204 }));
+
+		await requestPasswordReset(fetchMock as typeof fetch, {
+			email: 'user@example.com',
+			newPassword: 'Different2'
+		});
+
+		expect(fetchMock).toHaveBeenCalledWith(
+			`${env.APP_ENV}/auth/forgot-password`,
+			expect.objectContaining({
+				method: 'POST',
+				body: JSON.stringify({ email: 'user@example.com', newPassword: 'Different2' })
+			})
+		);
+	});
+
+	it('preserves the backend status when the request is rejected', async () => {
+		const fetchMock = vi.fn(async () =>
+			Response.json({ message: 'Too many requests.' }, { status: 429 })
+		);
+
+		await expect(
+			requestPasswordReset(fetchMock as typeof fetch, {
+				email: 'user@example.com',
+				newPassword: 'Different2'
+			})
+		).rejects.toMatchObject({ status: 429, message: 'Too many requests.' });
+	});
+});

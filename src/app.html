@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" type="image/svg+xml" href="%sveltekit.assets%/favicon.svg" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="text-scale" content="scale" />
+		<style>
+			html {
+				background: #fbf8ff;
+			}
+			html.dark {
+				background: #13121b;
+				color-scheme: dark;
+			}
+		</style>
+		<script>
+			try {
+				const authRoute = /^\/(?:login|signup|forgot-password)\/?$/.test(window.location.pathname);
+				const savedTheme = window.localStorage.getItem('theme');
+				const dark =
+					!authRoute &&
+					(savedTheme
+						? savedTheme === 'dark'
+						: window.matchMedia('(prefers-color-scheme: dark)').matches);
+				document.documentElement.classList.toggle('dark', dark);
+			} catch {
+				// Hydration applies the system preference if storage is unavailable.
+			}
+		</script>
+		<title>Linkpluse</title>
+		%sveltekit.head%
+	</head>
+	<body data-sveltekit-preload-data="hover">
+		<div style="display: contents">%sveltekit.body%</div>
+	</body>
+</html>
