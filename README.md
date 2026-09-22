@@ -25,7 +25,7 @@ Linkpluse is a SvelteKit web application for creating, managing, and monitoring 
 
 ## Prerequisites
 
-- Node.js 26 or newer
+- Node.js 24
 - npm
 - A running Linkpluse API
 

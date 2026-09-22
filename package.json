@@ -2,7 +2,7 @@
 	"name": "url-shortner-ui",
 	"private": true,
 	"engines": {
-		"node": ">=26"
+		"node": "24.x"
 	},
 	"version": "0.0.1",
 	"type": "module",
