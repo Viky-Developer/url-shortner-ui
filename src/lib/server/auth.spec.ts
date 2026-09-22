@@ -1,6 +1,13 @@
 import { env } from '$env/dynamic/private';
 import { describe, expect, it, vi } from 'vitest';
-import { changePassword, loginUser, logoutUser, refreshAccessToken, registerUser } from './auth';
+import {
+	changePassword,
+	loginUser,
+	logoutUser,
+	refreshAccessToken,
+	registerUser,
+	requestPasswordReset
+} from './auth';
 
 function successfulAuthResponse(): Response {
 	return new Response(
@@ -283,5 +290,37 @@ describe('changePassword', () => {
 				})
 			})
 		);
+	});
+});
+
+describe('requestPasswordReset', () => {
+	it('posts the email and new password to the public forgot-password endpoint', async () => {
+		const fetchMock = vi.fn(async () => new Response(null, { status: 204 }));
+
+		await requestPasswordReset(fetchMock as typeof fetch, {
+			email: 'user@example.com',
+			newPassword: 'Different2'
+		});
+
+		expect(fetchMock).toHaveBeenCalledWith(
+			`${env.APP_ENV}/auth/forgot-password`,
+			expect.objectContaining({
+				method: 'POST',
+				body: JSON.stringify({ email: 'user@example.com', newPassword: 'Different2' })
+			})
+		);
+	});
+
+	it('preserves the backend status when the request is rejected', async () => {
+		const fetchMock = vi.fn(async () =>
+			Response.json({ message: 'Too many requests.' }, { status: 429 })
+		);
+
+		await expect(
+			requestPasswordReset(fetchMock as typeof fetch, {
+				email: 'user@example.com',
+				newPassword: 'Different2'
+			})
+		).rejects.toMatchObject({ status: 429, message: 'Too many requests.' });
 	});
 });

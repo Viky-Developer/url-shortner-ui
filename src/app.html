@@ -16,7 +16,7 @@
 		</style>
 		<script>
 			try {
-				const authRoute = /^\/(?:login|signup)\/?$/.test(window.location.pathname);
+				const authRoute = /^\/(?:login|signup|forgot-password)\/?$/.test(window.location.pathname);
 				const savedTheme = window.localStorage.getItem('theme');
 				const dark =
 					!authRoute &&

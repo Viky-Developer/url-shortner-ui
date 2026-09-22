@@ -10,6 +10,11 @@ export interface LoginRequest {
 	revokeSessionId?: number;
 }
 
+export interface ForgotPasswordRequest {
+	email: string;
+	newPassword: string;
+}
+
 export interface ChangePasswordRequest {
 	currentPassword: string;
 	newPassword: string;
