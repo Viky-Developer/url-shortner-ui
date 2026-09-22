@@ -1,4 +1,4 @@
-# Linkpluse UI
+# Linkpluse URL Shortener UI
 
 Linkpluse is a SvelteKit web application for creating, managing, and monitoring shortened URLs. It includes account authentication, link lifecycle controls, click analytics, session management, administrative security controls, responsive appearance preferences, and custom service-unavailable states.
 
