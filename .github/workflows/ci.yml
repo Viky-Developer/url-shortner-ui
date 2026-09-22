@@ -2,17 +2,55 @@ name: CI
 
 on:
   push:
-    branches: [main, 'feat/*']
+    branches:
+      - main
+      - dev
+      - 'hotfix/*'
+      - 'release/*'
   pull_request:
-    branches: [main]
+    branches: [main, dev]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  NPM_CONFIG_ENGINE_STRICT: 'false'
+
 jobs:
+  branch-policy:
+    name: branch-policy
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Validate pull request source branch
+        env:
+          BASE_REF: ${{ github.base_ref }}
+          EVENT_NAME: ${{ github.event_name }}
+          HEAD_REF: ${{ github.head_ref }}
+        run: |
+          if [[ "$EVENT_NAME" != "pull_request" ]]; then
+            exit 0
+          fi
+
+          case "$BASE_REF:$HEAD_REF" in
+            main:hotfix/*|main:release/*)
+              ;;
+            dev:bug/*|dev:fix/*|dev:chore/*|dev:refactor/*|dev:feat/*)
+              ;;
+            main:*)
+              echo "::error::Pull requests into main must come from a hotfix/* or release/* branch."
+              exit 1
+              ;;
+            dev:*)
+              echo "::error::Pull requests into dev must come from a bug/*, fix/*, chore/*, refactor/*, or feat/* branch."
+              exit 1
+              ;;
+          esac
+
   lint:
     name: lint
+    needs: branch-policy
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -36,6 +74,7 @@ jobs:
 
   build:
     name: build
+    needs: branch-policy
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -56,6 +95,7 @@ jobs:
 
   test:
     name: test
+    needs: branch-policy
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
