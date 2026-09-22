@@ -5,12 +5,7 @@ on:
     branches:
       - main
       - dev
-      - 'feat/*'
-      - 'refactor/*'
-      - 'bug/*'
-      - 'fix/*'
       - 'hotfix/*'
-      - 'chore/*'
       - 'release/*'
   pull_request:
     branches: [main, dev]
@@ -20,8 +15,25 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  branch-policy:
+    name: branch-policy
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Validate pull request source branch
+        env:
+          BASE_REF: ${{ github.base_ref }}
+          EVENT_NAME: ${{ github.event_name }}
+          HEAD_REF: ${{ github.head_ref }}
+        run: |
+          if [[ "$EVENT_NAME" == "pull_request" && "$BASE_REF" == "main" && ! "$HEAD_REF" =~ ^(hotfix|release)/ ]]; then
+            echo "::error::Pull requests into main must come from a hotfix/* or release/* branch."
+            exit 1
+          fi
+
   lint:
     name: lint
+    needs: branch-policy
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -45,6 +57,7 @@ jobs:
 
   build:
     name: build
+    needs: branch-policy
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -65,6 +78,7 @@ jobs:
 
   test:
     name: test
+    needs: branch-policy
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
