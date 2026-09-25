@@ -4,6 +4,8 @@ Linkpluse is a SvelteKit web application for creating, managing, and monitoring 
 
 ## Features
 
+- Authenticate securely with Google OAuth 2.0 or email credentials
+- Streamlined auth experience with animated segmented tab toggles and collapsible credential forms
 - Create short links with optional custom codes, titles, descriptions, and expiration dates
 - Manage active, inactive, expired, and deleted links
 - Review click totals, visitor activity, referrer channels, devices, browsers, and locations
@@ -124,6 +126,7 @@ src/
 ├── routes/
 │   ├── admin/         Administrative controls
 │   ├── analytics/     Account-level analytics
+│   ├── auth/          Social OAuth endpoints (Google initiation & callback)
 │   ├── dashboard/     Link creation and summary dashboard
 │   ├── login/         Authentication
 │   ├── my-links/      Link management and per-link analytics
@@ -136,6 +139,13 @@ src/
 ```
 
 Server-side routes communicate with the backend using `APP_ENV`. Access and refresh tokens are stored in HTTP-only cookies, and access-token claims are verified before they are exposed to application pages.
+
+### Google OAuth Flow
+
+Linkpluse integrates with the backend Google OAuth 2.0 service:
+
+- **Initiation (`/auth/google`)**: Redirects user to backend `GET /api/v1/auth/google`, preserving destination return targets in the query parameters.
+- **Callback (`/auth/google/callback`)**: Receives the OAuth `code` and `state` parameters from Google, communicates with the backend `GET /api/v1/auth/google/callback` to exchange tokens, stores HTTP-only auth cookies, and smoothly redirects the authenticated user into the application.
 
 ## Testing
 

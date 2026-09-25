@@ -31,4 +31,5 @@ export { default as Wrench } from '@lucide/svelte/icons/wrench';
 export { default as UserRoundPlus } from '@lucide/svelte/icons/user-round-plus';
 export { default as X } from '@lucide/svelte/icons/x';
 export { default as HomeIcon } from './HomeIcon.svelte';
+export { default as GoogleIcon } from './GoogleIcon.svelte';
 export { default as LinkIcon } from './LinkIcon.svelte';

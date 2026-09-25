@@ -162,3 +162,8 @@ Standard components (Buttons, Inputs, Small Cards) use a 4px (0.25rem) radius to
   - _Deleted/Error:_ Red tint background, dark red text.
 - **Skeleton Loaders:** Use a subtle pulse animation on Zinc-100 blocks to represent loading data rows.
 - **Cards:** White background, 1px Zinc-200 border, no shadow unless hovered (then apply a 4px soft shadow).
+- **Auth Card:** Centered floating container (`max-w-md`, rounded `1.35rem`, subtle indigo border `border-indigo-100`, shadow `shadow-[0_24px_70px_-28px_rgba(79,70,229,0.38)]`, backdrop blur) set against a soft dotted grid background with glowing radial violet accents.
+- **Segmented Control (Tab Navigation):** Pill-based container (`bg-zinc-100`, `p-1`, `rounded-xl`) with a sliding white pill (`bg-white`, `rounded-lg`, `shadow-sm`, hardware-accelerated `transition-transform duration-200 ease-out`). Text labels sit above the pill (`z-10`) and remain 100% visible at all times, cross-fading text color (`transition-colors duration-200`) between active (`text-zinc-900`) and inactive (`text-zinc-500`).
+- **Social Auth Buttons:** Full-width button with official SVG brand asset, white surface, subtle border (`border-zinc-200`), with an indigo accent hover state (`hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700`).
+- **Collapsible Disclosure Buttons:** "Continue with Email ⌄" toggle with `bg-zinc-50 border-zinc-200`, animating an inline chevron (`duration-200`), seamlessly revealing or collapsing credential fields using Svelte `transition:slide` (`duration: 250`).
+- **Floating Label Inputs:** Inputs with leading icons (`Mail`, `LockKeyhole`, `IdCard`) that adaptively float labels into the top border notch when populated or focused, maintaining high contrast and accessibility.

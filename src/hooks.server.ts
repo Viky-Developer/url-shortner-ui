@@ -15,7 +15,14 @@ import {
 } from '$lib/server/auth-cookies';
 
 const LOGIN_PATH = '/login';
-const PUBLIC_PATHS = new Set([LOGIN_PATH, '/signup', '/forgot-password']);
+const PUBLIC_PATHS = new Set([
+	LOGIN_PATH,
+	'/signup',
+	'/forgot-password',
+	'/auth/google',
+	'/auth/google/callback',
+	'/auth/callback'
+]);
 const PUBLIC_PREFIXES = ['/demo/'];
 
 export function isPublicPath(pathname: string): boolean {
@@ -110,7 +117,9 @@ function isProtectedBackendRequest(requestUrl: string): boolean {
 		const publicAuthPaths = new Set([
 			`${apiPath}/auth/register`,
 			`${apiPath}/auth/login`,
-			`${apiPath}/auth/forgot-password`
+			`${apiPath}/auth/forgot-password`,
+			`${apiPath}/auth/google`,
+			`${apiPath}/auth/google/callback`
 		]);
 
 		return (

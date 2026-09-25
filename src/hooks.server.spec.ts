@@ -76,15 +76,19 @@ async function runHandle(event: RequestEvent, resolve = vi.fn(async () => new Re
 }
 
 describe('authentication middleware', () => {
-	it.each(['/login', '/signup', '/forgot-password'])(
-		'allows public %s requests without tokens',
-		async (pathname) => {
-			const { response, resolve } = await runHandle(createEvent(pathname));
+	it.each([
+		'/login',
+		'/signup',
+		'/forgot-password',
+		'/auth/google',
+		'/auth/google/callback',
+		'/auth/callback'
+	])('allows public %s requests without tokens', async (pathname) => {
+		const { response, resolve } = await runHandle(createEvent(pathname));
 
-			expect(response.status).toBe(200);
-			expect(resolve).toHaveBeenCalledOnce();
-		}
-	);
+		expect(response.status).toBe(200);
+		expect(resolve).toHaveBeenCalledOnce();
+	});
 
 	it('allows a protected route with a usable access token', async () => {
 		const now = Math.floor(Date.now() / 1000);
@@ -271,4 +275,25 @@ describe('authenticated server fetch', () => {
 		expect(fetcher).toHaveBeenCalledWith(request);
 		expect(request.headers.has('authorization')).toBe(false);
 	});
+
+	it.each(['/auth/google', '/auth/google/callback'])(
+		'does not attach an access token to the public backend %s endpoint',
+		async (path) => {
+			const event = createEvent('/login');
+			event.locals = { authenticated: true, accessToken: 'access-token' };
+			const request = new Request(`${env.APP_ENV}${path}`);
+			const fetcher = vi.fn(
+				async (requestToForward: Request) => new Response(requestToForward.url)
+			);
+
+			await handleFetch({
+				event,
+				request,
+				fetch: fetcher
+			} as unknown as Parameters<HandleFetch>[0]);
+
+			expect(fetcher).toHaveBeenCalledWith(request);
+			expect(request.headers.has('authorization')).toBe(false);
+		}
+	);
 });
