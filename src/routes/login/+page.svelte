@@ -139,7 +139,7 @@
 </svelte:head>
 
 <main
-	class="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#f8f7ff] p-4 text-foreground before:absolute before:inset-0 before:bg-[linear-gradient(to_right,rgba(99,102,241,0.055)_1px,transparent_1px),linear-gradient(to_bottom,rgba(99,102,241,0.055)_1px,transparent_1px)] before:bg-[size:32px_32px] after:absolute after:right-[-12rem] after:bottom-[-12rem] after:size-[34rem] after:rounded-full after:bg-violet-200/35 after:blur-3xl sm:p-6"
+	class="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#fbf8ff] p-4 text-foreground before:absolute before:inset-0 before:bg-[linear-gradient(to_right,rgba(99,102,241,0.055)_1px,transparent_1px),linear-gradient(to_bottom,rgba(99,102,241,0.055)_1px,transparent_1px)] before:bg-[size:32px_32px] after:absolute after:right-[-12rem] after:bottom-[-12rem] after:size-[34rem] after:rounded-full after:bg-violet-200/35 after:blur-3xl sm:p-6"
 >
 	<section
 		class="relative z-10 w-full max-w-md overflow-hidden rounded-[1.35rem] border border-indigo-100 bg-white/95 shadow-[0_24px_70px_-28px_rgba(79,70,229,0.38)] backdrop-blur"
