@@ -203,20 +203,29 @@
 
 			<a
 				href={resolve('/auth/google')}
-				class="flex h-12 w-full items-center justify-center gap-3 rounded-xl border border-zinc-200 bg-white px-4 text-body-base font-semibold text-zinc-700 shadow-sm transition-all hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+				class="group flex h-12 w-full items-center justify-center gap-3 rounded-xl border border-zinc-200 bg-white px-4 text-body-base font-semibold text-zinc-700 shadow-sm transition-all duration-200 ease-out hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700 hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 motion-safe:hover:-translate-y-0.5 motion-safe:hover:scale-[1.01] motion-safe:active:translate-y-0 motion-safe:active:scale-[0.99]"
 			>
-				<GoogleIcon class="size-5" />
+				<GoogleIcon class="size-5 transition-transform duration-200 group-hover:scale-110" />
 				Continue with Google
 			</a>
 
+			<div class="my-4 flex items-center gap-3" role="separator" aria-label="or">
+				<div class="h-px flex-1 bg-zinc-200" aria-hidden="true"></div>
+				<span class="text-xs font-medium tracking-wide text-zinc-400">or</span>
+				<div class="h-px flex-1 bg-zinc-200" aria-hidden="true"></div>
+			</div>
+
 			<button
 				type="button"
-				class="my-4 flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 text-sm font-semibold text-zinc-700 transition-colors hover:border-zinc-300 hover:bg-zinc-100/80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+				class="group mb-4 flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 text-sm font-semibold text-zinc-700 shadow-sm transition-all duration-200 ease-out hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700 hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 motion-safe:hover:-translate-y-0.5 motion-safe:hover:scale-[1.01] motion-safe:active:translate-y-0 motion-safe:active:scale-[0.99]"
 				onclick={() => (showEmailForm = !showEmailForm)}
 				aria-expanded={showEmailForm}
 				aria-controls="email-signup-form"
 			>
-				<Mail class="size-4 text-zinc-500" aria-hidden="true" />
+				<Mail
+					class="size-4 text-zinc-500 transition-transform duration-200 group-hover:scale-110 group-hover:text-indigo-600"
+					aria-hidden="true"
+				/>
 				<span>Continue with Email</span>
 				<ChevronDown
 					class={[

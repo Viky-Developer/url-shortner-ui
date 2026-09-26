@@ -56,6 +56,29 @@ function unauthorizedResponse(event: RequestEvent, reason?: 'session-expired'): 
 	return redirect(303, query ? `${LOGIN_PATH}?${query}` : LOGIN_PATH);
 }
 
+function pendingDeletionResponse(event: RequestEvent): Response | undefined {
+	if (event.locals.user?.status?.toUpperCase() !== 'PENDING_DELETION') return undefined;
+	const recoveryAction =
+		event.request.method === 'POST' &&
+		event.url.pathname === '/settings' &&
+		event.url.search === '?/cancelDeletion';
+	if (recoveryAction || event.url.pathname === '/logout') return undefined;
+
+	if (isApiRequest(event)) {
+		return Response.json(
+			{
+				statusCode: 423,
+				error: 'Account deletion is pending. Restore the account to continue.'
+			},
+			{ status: 423 }
+		);
+	}
+
+	if (event.request.method === 'GET') return undefined;
+
+	return redirect(303, event.url.pathname);
+}
+
 function setAuthenticatedLocals(
 	event: RequestEvent,
 	accessToken: string,
@@ -80,6 +103,8 @@ export const handle: Handle = async ({ event, resolve }) => {
 	const verifiedClaims = accessToken ? await verifyAccessToken(accessToken) : undefined;
 	if (accessToken && verifiedClaims) {
 		setAuthenticatedLocals(event, accessToken, verifiedClaims);
+		const pendingResponse = pendingDeletionResponse(event);
+		if (pendingResponse) return pendingResponse;
 		const response = await resolve(event);
 		response.headers.set('cache-control', 'private, no-store');
 		return response;
@@ -100,6 +125,8 @@ export const handle: Handle = async ({ event, resolve }) => {
 		if (!refreshedClaims) throw new Error('The refreshed access token is invalid.');
 		setAuthCookies(event.cookies, tokens);
 		setAuthenticatedLocals(event, tokens.accessToken, refreshedClaims);
+		const pendingResponse = pendingDeletionResponse(event);
+		if (pendingResponse) return pendingResponse;
 		const response = await resolve(event);
 		response.headers.set('cache-control', 'private, no-store');
 		return response;

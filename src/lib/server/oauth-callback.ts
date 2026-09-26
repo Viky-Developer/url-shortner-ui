@@ -7,6 +7,7 @@ import { redirect, type Cookies } from '@sveltejs/kit';
 const BACKEND_GOOGLE_CALLBACK_PATH = '/auth/google/callback';
 const FRONTEND_CALLBACK_PATHS = ['/auth/callback', '/auth/google/callback'];
 const DEFAULT_REDIRECT = '/dashboard';
+const OAUTH_LOGIN_SUCCESS_COOKIE = 'oauth_login_success';
 
 type OAuthCallbackEvent = {
 	url: URL;
@@ -149,5 +150,12 @@ export async function handleOAuthCallback({ url, cookies, fetch: fetcher }: OAut
 			role: claims.role ?? null
 		}
 	);
+	cookies.set(OAUTH_LOGIN_SUCCESS_COOKIE, '1', {
+		path: '/',
+		httpOnly: true,
+		secure: url.protocol === 'https:',
+		sameSite: 'lax',
+		maxAge: 60
+	});
 	return redirect(303, safeRedirectTarget(url));
 }

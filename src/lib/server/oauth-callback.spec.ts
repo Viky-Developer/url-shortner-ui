@@ -53,6 +53,11 @@ describe('OAuth callback handling', () => {
 			expect.any(String),
 			expect.objectContaining({ httpOnly: true, sameSite: 'lax' })
 		);
+		expect(cookies.set).toHaveBeenCalledWith(
+			'oauth_login_success',
+			'1',
+			expect.objectContaining({ httpOnly: true, maxAge: 60, sameSite: 'lax' })
+		);
 	});
 
 	it('exchanges an authorization code and persists user metadata', async () => {

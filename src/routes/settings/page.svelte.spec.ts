@@ -7,6 +7,7 @@ function renderSettings(changeSuggested?: boolean | null) {
 	render(SettingsPage, {
 		params: {},
 		data: {
+			oauthLoginSuccess: false,
 			user: {
 				id: 'user-1',
 				email: 'user@example.com',
