@@ -5,7 +5,8 @@ import { describe, expect, it, vi } from 'vitest';
 import {
 	ACCESS_TOKEN_COOKIE,
 	ACCESS_TOKEN_LIFETIME_SECONDS,
-	REFRESH_TOKEN_COOKIE
+	REFRESH_TOKEN_COOKIE,
+	USER_METADATA_COOKIE
 } from '$lib/server/auth-cookies';
 import { handle, handleFetch } from './hooks.server';
 
@@ -54,6 +55,7 @@ function createEvent(
 		fetcher?: typeof fetch;
 		accept?: string;
 		routeId?: string | null;
+		method?: string;
 	} = {}
 ): RequestEvent {
 	const url = new URL(pathname, 'https://app.example.test');
@@ -63,6 +65,7 @@ function createEvent(
 		fetch: options.fetcher ?? vi.fn(async () => new Response()),
 		locals: {},
 		request: new Request(url, {
+			method: options.method ?? 'GET',
 			headers: { accept: options.accept ?? 'text/html' }
 		}),
 		route: { id: options.routeId === undefined ? pathname : options.routeId },
@@ -76,15 +79,19 @@ async function runHandle(event: RequestEvent, resolve = vi.fn(async () => new Re
 }
 
 describe('authentication middleware', () => {
-	it.each(['/login', '/signup', '/forgot-password'])(
-		'allows public %s requests without tokens',
-		async (pathname) => {
-			const { response, resolve } = await runHandle(createEvent(pathname));
+	it.each([
+		'/login',
+		'/signup',
+		'/forgot-password',
+		'/auth/google',
+		'/auth/google/callback',
+		'/auth/callback'
+	])('allows public %s requests without tokens', async (pathname) => {
+		const { response, resolve } = await runHandle(createEvent(pathname));
 
-			expect(response.status).toBe(200);
-			expect(resolve).toHaveBeenCalledOnce();
-		}
-	);
+		expect(response.status).toBe(200);
+		expect(resolve).toHaveBeenCalledOnce();
+	});
 
 	it('allows a protected route with a usable access token', async () => {
 		const now = Math.floor(Date.now() / 1000);
@@ -110,6 +117,84 @@ describe('authentication middleware', () => {
 				email: 'alex@example.com'
 			}
 		});
+	});
+
+	it('renders the shared recovery screen under each application URL', async () => {
+		const now = Math.floor(Date.now() / 1000);
+		const accessToken = createToken(now, now + ACCESS_TOKEN_LIFETIME_SECONDS);
+		const { cookies } = createCookies({
+			[ACCESS_TOKEN_COOKIE]: accessToken,
+			[USER_METADATA_COOKIE]: JSON.stringify({ status: 'PENDING_DELETION' })
+		});
+		const event = createEvent('/analytics', { cookies });
+		const resolve = vi.fn(async () => new Response('protected content'));
+
+		const { response } = await runHandle(event, resolve);
+
+		expect(response.status).toBe(200);
+		expect(resolve).toHaveBeenCalledOnce();
+		expect(event.locals.user?.status).toBe('PENDING_DELETION');
+	});
+
+	it.each(['/settings', '/logout'])(
+		'allows a pending-deletion account to access recovery route %s',
+		async (pathname) => {
+			const now = Math.floor(Date.now() / 1000);
+			const accessToken = createToken(now, now + ACCESS_TOKEN_LIFETIME_SECONDS);
+			const { cookies } = createCookies({
+				[ACCESS_TOKEN_COOKIE]: accessToken,
+				[USER_METADATA_COOKIE]: JSON.stringify({ status: 'PENDING_DELETION' })
+			});
+			const { response, resolve } = await runHandle(createEvent(pathname, { cookies }));
+
+			expect(response.status).toBe(200);
+			expect(resolve).toHaveBeenCalledOnce();
+		}
+	);
+
+	it('allows only the restore action on the pending-deletion recovery screen', async () => {
+		const now = Math.floor(Date.now() / 1000);
+		const accessToken = createToken(now, now + ACCESS_TOKEN_LIFETIME_SECONDS);
+		const { cookies } = createCookies({
+			[ACCESS_TOKEN_COOKIE]: accessToken,
+			[USER_METADATA_COOKIE]: JSON.stringify({ status: 'PENDING_DELETION' })
+		});
+		const restore = createEvent('/settings?/cancelDeletion', {
+			cookies,
+			method: 'POST',
+			accept: 'application/json'
+		});
+		const blocked = createEvent('/settings?/changePassword', { cookies, method: 'POST' });
+
+		const { response, resolve } = await runHandle(restore);
+		expect(response.status).toBe(200);
+		expect(resolve).toHaveBeenCalledOnce();
+		await expect(runHandle(blocked)).rejects.toMatchObject({
+			status: 303,
+			location: '/settings'
+		});
+	});
+
+	it('returns 423 for pending-deletion API requests', async () => {
+		const now = Math.floor(Date.now() / 1000);
+		const accessToken = createToken(now, now + ACCESS_TOKEN_LIFETIME_SECONDS);
+		const { cookies } = createCookies({
+			[ACCESS_TOKEN_COOKIE]: accessToken,
+			[USER_METADATA_COOKIE]: JSON.stringify({ status: 'PENDING_DELETION' })
+		});
+		const event = createEvent('/api/links', {
+			cookies,
+			accept: 'application/json',
+			routeId: '/api/links'
+		});
+		const { response, resolve } = await runHandle(event);
+
+		expect(response.status).toBe(423);
+		expect(await response.json()).toEqual({
+			statusCode: 423,
+			error: 'Account deletion is pending. Restore the account to continue.'
+		});
+		expect(resolve).not.toHaveBeenCalled();
 	});
 
 	it('protects the dashboard when authentication is missing', async () => {
@@ -271,4 +356,25 @@ describe('authenticated server fetch', () => {
 		expect(fetcher).toHaveBeenCalledWith(request);
 		expect(request.headers.has('authorization')).toBe(false);
 	});
+
+	it.each(['/auth/google', '/auth/google/callback'])(
+		'does not attach an access token to the public backend %s endpoint',
+		async (path) => {
+			const event = createEvent('/login');
+			event.locals = { authenticated: true, accessToken: 'access-token' };
+			const request = new Request(`${env.APP_ENV}${path}`);
+			const fetcher = vi.fn(
+				async (requestToForward: Request) => new Response(requestToForward.url)
+			);
+
+			await handleFetch({
+				event,
+				request,
+				fetch: fetcher
+			} as unknown as Parameters<HandleFetch>[0]);
+
+			expect(fetcher).toHaveBeenCalledWith(request);
+			expect(request.headers.has('authorization')).toBe(false);
+		}
+	);
 });

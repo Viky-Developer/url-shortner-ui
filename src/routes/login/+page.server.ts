@@ -41,7 +41,11 @@ function loginErrorMessage(status: number): string {
 
 export const load: PageServerLoad = ({ locals, url }) => {
 	if (locals.authenticated) return redirect(303, safeRedirectTarget(url));
-	return { sessionExpired: url.searchParams.get('reason') === 'session-expired' };
+	return {
+		sessionExpired: url.searchParams.get('reason') === 'session-expired',
+		oauthError: url.searchParams.get('oauthError'),
+		redirectTo: safeRedirectTarget(url)
+	};
 };
 
 export const actions = {

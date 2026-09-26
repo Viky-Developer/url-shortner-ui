@@ -11,6 +11,8 @@ test('signs in through SSR and redirects to the requested protected route', asyn
 	await request.post(`${BACKEND_URL}/__test__/reset-login`);
 	await page.goto('/login?redirectTo=%2Fanalytics');
 
+	await page.getByRole('button', { name: 'Continue with Email' }).click();
+
 	const submitButton = page.getByRole('button', { name: 'Sign In' });
 	await expect(submitButton).toBeDisabled();
 	await expect(submitButton).toHaveCSS('cursor', 'not-allowed');
@@ -54,6 +56,7 @@ test('keeps login light after a client-side auth redirect from dark mode', async
 	page
 }) => {
 	await page.goto('/login');
+	await page.getByRole('button', { name: 'Continue with Email' }).click();
 	await page.getByLabel('Email').fill('user@example.com');
 	await page.getByTestId('login-password-input').fill('existing-password');
 	await page.getByRole('button', { name: 'Sign In' }).click();

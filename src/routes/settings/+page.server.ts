@@ -63,14 +63,26 @@ export const actions: Actions = {
 		try {
 			await scheduleAccountDeletion(fetch);
 		} catch (error) {
+			if (
+				error instanceof AuthApiError &&
+				error.status === 409 &&
+				error.message.toUpperCase().includes('PENDING_DELETION')
+			) {
+				setAccountStatusCookie(cookies, 'PENDING_DELETION');
+				return {
+					success: 'Account deletion is already pending. Opening account recovery…',
+					redirectTo: '/settings',
+					redirectDelayMs: 3000
+				};
+			}
 			return fail(400, { error: handleFailure(error, cookies) });
 		}
 
-		clearAuthCookies(cookies);
+		setAccountStatusCookie(cookies, 'PENDING_DELETION');
 		return {
-			success: 'Account deletion scheduled. Redirecting to sign in…',
-			redirectTo: '/login',
-			redirectDelayMs: 2000
+			success: 'Account deletion scheduled. Opening account recovery…',
+			redirectTo: '/settings',
+			redirectDelayMs: 3000
 		};
 	},
 	cancelDeletion: async ({ fetch, cookies }) => {
