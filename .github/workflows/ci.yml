@@ -34,12 +34,12 @@ jobs:
           fi
 
           case "$BASE_REF:$HEAD_REF" in
-            main:hotfix/*|main:release/*)
+            main:dev|main:hotfix/*|main:release/*)
               ;;
             dev:bug/*|dev:fix/*|dev:chore/*|dev:refactor/*|dev:feat/*)
               ;;
             main:*)
-              echo "::error::Pull requests into main must come from a hotfix/* or release/* branch."
+              echo "::error::Pull requests into main must come from a dev, hotfix/*, or release/* branch."
               exit 1
               ;;
             dev:*)
