@@ -29,6 +29,7 @@ function createAccessToken(email) {
 		email,
 		display_name: 'Login Test User',
 		role: 'USER',
+		provider: 'SYSTEM',
 		session_id: 17,
 		session_version: now,
 		iat: now,
@@ -77,6 +78,14 @@ const server = createServer((request, response) => {
 					authorization: request.headers.authorization ?? null,
 					contentType: request.headers['content-type']
 				};
+				if (body.email === 'google-user@example.com') {
+					sendJson(response, 401, {
+						error:
+							'unauthorized access: this account uses Google sign-in; please Continue with Google',
+						email: body.email
+					});
+					return;
+				}
 				sendJson(response, 200, {
 					statusCode: 200,
 					message: 'authenticated',

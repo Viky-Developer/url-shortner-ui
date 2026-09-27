@@ -1,5 +1,5 @@
 import { env } from '$env/dynamic/private';
-import type { AuthenticatedUser } from '$lib/types/auth';
+import type { AuthenticatedUser, AuthProvider } from '$lib/types/auth';
 import { jwtVerify } from 'jose';
 import { ACCESS_TOKEN_LIFETIME_SECONDS } from './auth-cookies';
 
@@ -14,6 +14,7 @@ export interface AccessTokenClaims {
 	userId: string;
 	sessionId: number;
 	sessionVersion: number;
+	provider?: AuthProvider;
 	displayName?: string;
 	email?: string;
 	role?: string;
@@ -32,6 +33,10 @@ function readString(value: unknown): string | undefined {
 
 function readPositiveInteger(value: unknown): number | undefined {
 	return typeof value === 'number' && Number.isSafeInteger(value) && value > 0 ? value : undefined;
+}
+
+function readProvider(value: unknown): AuthProvider | undefined {
+	return value === 'SYSTEM' || value === 'GOOGLE' ? value : undefined;
 }
 
 function getVerificationKey(): Uint8Array {
@@ -99,6 +104,7 @@ export async function verifyAccessToken(
 		const displayName = readString(payload.display_name);
 		const email = readString(payload.email);
 		const role = readString(payload.role);
+		const provider = readProvider(payload.provider);
 
 		return {
 			exp,
@@ -107,6 +113,7 @@ export async function verifyAccessToken(
 			userId,
 			sessionId,
 			sessionVersion,
+			...(provider ? { provider } : {}),
 			...(displayName ? { displayName } : {}),
 			...(email ? { email } : {}),
 			...(role ? { role } : {})
@@ -122,6 +129,7 @@ export function accessTokenUserFromClaims(claims: AccessTokenClaims): Authentica
 	return {
 		id: claims.userId,
 		displayName: claims.displayName || emailName || 'User',
+		...(claims.provider ? { provider: claims.provider } : {}),
 		...(claims.email ? { email: claims.email } : {}),
 		...(claims.role ? { role: claims.role } : {})
 	};

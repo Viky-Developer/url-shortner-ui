@@ -15,6 +15,8 @@ test('submits registration only after Create Account is clicked', async ({ page 
 
 	await page.goto('/signup');
 
+	await page.getByRole('button', { name: 'Continue with Email' }).click();
+
 	const submitButton = page.getByRole('button', { name: 'Create Account' });
 	await expect(submitButton).toBeDisabled();
 	await expect(submitButton).toHaveCSS('cursor', 'not-allowed');
