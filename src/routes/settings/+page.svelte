@@ -117,7 +117,7 @@
 		</p>
 	</header>
 
-	{#if data.user?.changeSuggested === true}
+	{#if data.user?.provider === 'SYSTEM' && data.user.changeSuggested === true}
 		<div
 			class="flex gap-3 rounded-xl border border-amber-500/20 bg-amber-500/10 p-4 text-amber-700 dark:text-amber-300"
 			role="status"
@@ -200,128 +200,149 @@
 				</p>
 			</div>
 		</div>
-		<form
-			method="POST"
-			action="?/changePassword"
-			use:enhance={() => {
-				changingPassword = true;
-				return async ({ result, update }) => {
-					await update({ reset: result.type === 'success' });
-					if (result.type === 'success') {
-						currentPassword = '';
-						newPassword = '';
-						confirmPassword = '';
-						if (typeof result.data?.success === 'string') toast.success(result.data.success);
-					} else if (result.type === 'failure' && typeof result.data?.error === 'string') {
-						toast.error(result.data.error);
-					} else if (result.type === 'error') {
-						toast.error('Unable to change your password. Please try again.');
-					}
-					changingPassword = false;
-				};
-			}}
-		>
-			<div class="mt-5 grid gap-4">
-				<label class="grid gap-1.5 text-xs font-medium text-muted-foreground">
-					Current password
-					<span class="relative">
-						<input
-							type={showCurrentPassword ? 'text' : 'password'}
-							name="currentPassword"
-							autocomplete="current-password"
-							required
-							bind:value={currentPassword}
-							placeholder="Enter your current password"
-							class="h-10 w-full rounded-lg border border-input bg-background px-3 pr-10 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-						/>
-						<button
-							type="button"
-							class="absolute inset-y-0 right-3 text-muted-foreground hover:text-foreground"
-							onclick={() => (showCurrentPassword = !showCurrentPassword)}
-							aria-label={showCurrentPassword ? 'Hide current password' : 'Show current password'}
-						>
-							{#if showCurrentPassword}<EyeOff class="size-4" />{:else}<Eye class="size-4" />{/if}
-						</button>
-					</span>
-				</label>
-				<label class="grid gap-1.5 text-xs font-medium text-muted-foreground">
-					New password
-					<span class="relative">
-						<input
-							type={showNewPassword ? 'text' : 'password'}
-							name="newPassword"
-							autocomplete="new-password"
-							required
-							minlength="8"
-							maxlength="55"
-							pattern={passwordPattern}
-							bind:value={newPassword}
-							aria-invalid={newPassword.length > 0 && (!newPasswordValid || !passwordIsDifferent)}
-							placeholder="Enter a new password"
-							class="h-10 w-full rounded-lg border border-input bg-background px-3 pr-10 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 aria-invalid:border-destructive"
-						/>
-						<button
-							type="button"
-							class="absolute inset-y-0 right-3 text-muted-foreground hover:text-foreground"
-							onclick={() => (showNewPassword = !showNewPassword)}
-							aria-label={showNewPassword ? 'Hide new password' : 'Show new password'}
-						>
-							{#if showNewPassword}<EyeOff class="size-4" />{:else}<Eye class="size-4" />{/if}
-						</button>
-					</span>
-				</label>
-				{#if newPassword.length > 0 && !newPasswordValid}
-					<p class="text-xs text-destructive">
-						Use 8–55 characters with uppercase, lowercase, and a number.
-					</p>
-				{:else if newPassword.length > 0 && !passwordIsDifferent}
-					<p class="text-xs text-destructive">
-						New password must be different from your current password.
-					</p>
-				{/if}
-				<label class="grid gap-1.5 text-xs font-medium text-muted-foreground">
-					Confirm new password
-					<span class="relative">
-						<input
-							type={showConfirmPassword ? 'text' : 'password'}
-							name="confirmPassword"
-							autocomplete="new-password"
-							required
-							minlength="8"
-							maxlength="55"
-							pattern={passwordPattern}
-							bind:value={confirmPassword}
-							aria-invalid={confirmPassword.length > 0 && !passwordsMatch}
-							placeholder="Confirm your new password"
-							class="h-10 w-full rounded-lg border border-input bg-background px-3 pr-10 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 aria-invalid:border-destructive"
-						/>
-						<button
-							type="button"
-							class="absolute inset-y-0 right-3 text-muted-foreground hover:text-foreground"
-							onclick={() => (showConfirmPassword = !showConfirmPassword)}
-							aria-label={showConfirmPassword
-								? 'Hide password confirmation'
-								: 'Show password confirmation'}
-						>
-							{#if showConfirmPassword}<EyeOff class="size-4" />{:else}<Eye class="size-4" />{/if}
-						</button>
-					</span>
-				</label>
-				{#if confirmPassword.length > 0 && !passwordsMatch}
-					<p class="text-xs text-destructive">New password and confirmation do not match.</p>
-				{/if}
-			</div>
-			<div class="mt-5 flex justify-end border-t border-border pt-5">
-				<button
-					type="submit"
-					disabled={!passwordFormValid || changingPassword}
-					class="inline-flex h-9 items-center gap-2 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-50"
+		{#if data.user?.provider === 'SYSTEM'}
+			<form
+				method="POST"
+				action="?/changePassword"
+				use:enhance={() => {
+					changingPassword = true;
+					return async ({ result, update }) => {
+						await update({ reset: result.type === 'success' });
+						if (result.type === 'success') {
+							currentPassword = '';
+							newPassword = '';
+							confirmPassword = '';
+							if (typeof result.data?.success === 'string') toast.success(result.data.success);
+						} else if (result.type === 'failure' && typeof result.data?.error === 'string') {
+							toast.error(result.data.error);
+						} else if (result.type === 'error') {
+							toast.error('Unable to change your password. Please try again.');
+						}
+						changingPassword = false;
+					};
+				}}
+			>
+				<div class="mt-5 grid gap-4">
+					<label class="grid gap-1.5 text-xs font-medium text-muted-foreground">
+						Current password
+						<span class="relative">
+							<input
+								type={showCurrentPassword ? 'text' : 'password'}
+								name="currentPassword"
+								autocomplete="current-password"
+								required
+								bind:value={currentPassword}
+								placeholder="Enter your current password"
+								class="h-10 w-full rounded-lg border border-input bg-background px-3 pr-10 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+							/>
+							<button
+								type="button"
+								class="absolute inset-y-0 right-3 text-muted-foreground hover:text-foreground"
+								onclick={() => (showCurrentPassword = !showCurrentPassword)}
+								aria-label={showCurrentPassword ? 'Hide current password' : 'Show current password'}
+							>
+								{#if showCurrentPassword}<EyeOff class="size-4" />{:else}<Eye class="size-4" />{/if}
+							</button>
+						</span>
+					</label>
+					<label class="grid gap-1.5 text-xs font-medium text-muted-foreground">
+						New password
+						<span class="relative">
+							<input
+								type={showNewPassword ? 'text' : 'password'}
+								name="newPassword"
+								autocomplete="new-password"
+								required
+								minlength="8"
+								maxlength="55"
+								pattern={passwordPattern}
+								bind:value={newPassword}
+								aria-invalid={newPassword.length > 0 && (!newPasswordValid || !passwordIsDifferent)}
+								placeholder="Enter a new password"
+								class="h-10 w-full rounded-lg border border-input bg-background px-3 pr-10 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 aria-invalid:border-destructive"
+							/>
+							<button
+								type="button"
+								class="absolute inset-y-0 right-3 text-muted-foreground hover:text-foreground"
+								onclick={() => (showNewPassword = !showNewPassword)}
+								aria-label={showNewPassword ? 'Hide new password' : 'Show new password'}
+							>
+								{#if showNewPassword}<EyeOff class="size-4" />{:else}<Eye class="size-4" />{/if}
+							</button>
+						</span>
+					</label>
+					{#if newPassword.length > 0 && !newPasswordValid}
+						<p class="text-xs text-destructive">
+							Use 8–55 characters with uppercase, lowercase, and a number.
+						</p>
+					{:else if newPassword.length > 0 && !passwordIsDifferent}
+						<p class="text-xs text-destructive">
+							New password must be different from your current password.
+						</p>
+					{/if}
+					<label class="grid gap-1.5 text-xs font-medium text-muted-foreground">
+						Confirm new password
+						<span class="relative">
+							<input
+								type={showConfirmPassword ? 'text' : 'password'}
+								name="confirmPassword"
+								autocomplete="new-password"
+								required
+								minlength="8"
+								maxlength="55"
+								pattern={passwordPattern}
+								bind:value={confirmPassword}
+								aria-invalid={confirmPassword.length > 0 && !passwordsMatch}
+								placeholder="Confirm your new password"
+								class="h-10 w-full rounded-lg border border-input bg-background px-3 pr-10 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 aria-invalid:border-destructive"
+							/>
+							<button
+								type="button"
+								class="absolute inset-y-0 right-3 text-muted-foreground hover:text-foreground"
+								onclick={() => (showConfirmPassword = !showConfirmPassword)}
+								aria-label={showConfirmPassword
+									? 'Hide password confirmation'
+									: 'Show password confirmation'}
+							>
+								{#if showConfirmPassword}<EyeOff class="size-4" />{:else}<Eye class="size-4" />{/if}
+							</button>
+						</span>
+					</label>
+					{#if confirmPassword.length > 0 && !passwordsMatch}
+						<p class="text-xs text-destructive">New password and confirmation do not match.</p>
+					{/if}
+				</div>
+				<div class="mt-5 flex justify-end border-t border-border pt-5">
+					<button
+						type="submit"
+						disabled={!passwordFormValid || changingPassword}
+						class="inline-flex h-9 items-center gap-2 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-50"
+					>
+						{#if changingPassword}<LoaderCircle class="size-4 animate-spin" />{/if}
+						{changingPassword ? 'Saving…' : 'Save changes'}
+					</button>
+				</div>
+			</form>
+		{:else}
+			<div
+				class="mt-5 flex gap-3 rounded-lg border border-indigo-500/30 bg-indigo-500/10 p-4 text-indigo-950 dark:text-indigo-100"
+				role="status"
+			>
+				<span
+					class="flex size-9 shrink-0 items-center justify-center rounded-full bg-indigo-500/15 text-indigo-600 dark:bg-indigo-400/15 dark:text-indigo-300"
 				>
-					{#if changingPassword}<LoaderCircle class="size-4 animate-spin" />{/if}
-					{changingPassword ? 'Saving…' : 'Save changes'}
-				</button>
+					<CircleAlert class="size-5" aria-hidden="true" />
+				</span>
+				<div>
+					<p class="text-sm font-semibold">Password changes are unavailable</p>
+					<p class="mt-1 text-xs leading-5 text-indigo-800 dark:text-indigo-200">
+						{data.user?.provider === 'GOOGLE'
+							? 'This account uses Google sign-in. Manage your password through Google.'
+							: 'This account does not support password changes.'}
+					</p>
+				</div>
 			</div>
-		</form>
+		{/if}
 	</section>
 
 	<section

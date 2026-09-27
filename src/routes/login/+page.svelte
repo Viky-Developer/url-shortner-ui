@@ -122,7 +122,11 @@
 					return;
 				}
 
-				toast.error(signInErrorMessage(result.status ?? 500), { id: toastId });
+				const message =
+					result.type === 'failure' && typeof result.data?.message === 'string'
+						? result.data.message
+						: signInErrorMessage(result.status ?? 500);
+				toast.error(message, { id: toastId });
 				await update({ reset: false });
 			} catch {
 				toast.error('We could not complete sign-in. Please try again.', { id: toastId });

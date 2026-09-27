@@ -9,7 +9,7 @@ Linkpluse is a SvelteKit web application for creating, managing, and monitoring 
 - Create short links with optional custom codes, titles, descriptions, and expiration dates
 - Manage active, inactive, expired, and deleted links
 - Review click totals, visitor activity, referrer channels, devices, browsers, and locations
-- Manage account security, active sessions, password changes, and scheduled account deletion
+- Manage account security, active sessions, auth provider identity (Email vs Google OAuth), provider-guarded password changes, and scheduled account deletion
 - Administer users, blocked domains, blocked IP ranges, and security-data retention
 - Recover gracefully when the API is unavailable
 - Switch instantly between light, dark, and system-matched themes from Account Settings

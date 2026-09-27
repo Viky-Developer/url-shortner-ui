@@ -51,6 +51,19 @@ test('signs in through SSR and redirects to the requested protected route', asyn
 	await expect(page).toHaveURL('/dashboard');
 });
 
+test('shows the backend guidance when an account uses Google sign-in', async ({ page }) => {
+	await page.goto('/login');
+	await page.getByRole('button', { name: 'Continue with Email' }).click();
+	await page.getByLabel('Email').fill('google-user@example.com');
+	await page.getByTestId('login-password-input').fill('unused-password');
+	await page.getByRole('button', { name: 'Sign In' }).click();
+
+	await expect(
+		page.getByText('Please sign in with Google using the “Continue with Google” button.')
+	).toBeVisible();
+	await expect(page).toHaveURL('/login');
+});
+
 test('keeps login light after a client-side auth redirect from dark mode', async ({
 	context,
 	page

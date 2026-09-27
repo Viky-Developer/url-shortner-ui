@@ -23,6 +23,7 @@ function event(confirmation = 'delete my account') {
 	return {
 		fetch: vi.fn(),
 		cookies: {},
+		locals: { user: { id: '1', displayName: 'Vicky', provider: 'SYSTEM' } },
 		parent: vi.fn().mockResolvedValue({ user: { id: '1', displayName: 'Vicky' } }),
 		request: new Request('http://localhost/settings', { method: 'POST', body })
 	};
@@ -65,6 +66,21 @@ describe('settings account lifecycle', () => {
 		);
 
 		expect(result).toMatchObject({ status: 400 });
+		expect(changePassword).not.toHaveBeenCalled();
+	});
+
+	it('blocks password changes for Google accounts', async () => {
+		const input = passwordEvent('Current1', 'Different2', 'Different2');
+		input.locals.user.provider = 'GOOGLE';
+
+		const result = await actions.changePassword(input as unknown as ChangePasswordEvent);
+
+		expect(result).toMatchObject({
+			status: 403,
+			data: {
+				error: 'Password changes are only available for accounts that sign in with email.'
+			}
+		});
 		expect(changePassword).not.toHaveBeenCalled();
 	});
 

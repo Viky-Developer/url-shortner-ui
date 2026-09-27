@@ -27,7 +27,13 @@ export const load: PageServerLoad = async ({ parent }) => {
 };
 
 export const actions: Actions = {
-	changePassword: async ({ request, fetch, cookies }) => {
+	changePassword: async ({ request, fetch, cookies, locals }) => {
+		if (locals.user?.provider !== 'SYSTEM') {
+			return fail(403, {
+				error: 'Password changes are only available for accounts that sign in with email.'
+			});
+		}
+
 		const form = await request.formData();
 		const currentPassword = passwordValue(form, 'currentPassword');
 		const newPassword = passwordValue(form, 'newPassword');
