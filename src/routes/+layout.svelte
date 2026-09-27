@@ -58,6 +58,12 @@
 	const pendingDeletion = $derived(data.user?.status?.toUpperCase() === 'PENDING_DELETION');
 
 	$effect(() => {
+		if (data.oauthLoginSuccess) {
+			toast.success('Signed in successfully.', { id: 'oauth-login-success' });
+		}
+	});
+
+	$effect(() => {
 		const authRoute = isAuthRoute;
 		const root = document.documentElement;
 		root.classList.remove('theme-changing');
@@ -176,5 +182,6 @@
 <Toaster
 	position="top-right"
 	richColors
+	duration={3000}
 	toastOptions={{ style: 'min-height: 64px; padding: 16px 18px;' }}
 />

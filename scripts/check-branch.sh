@@ -16,7 +16,7 @@ for allowed in $ALLOWED_BRANCHES; do
   fi
 done
 
-if ! [[ "$branch" =~ ^(feat|refactor|bug|fix|chore|hotfix)/.+ ]]; then
+if ! [[ "$branch" =~ ^(feat|refactor|bug|fix|chore|hotfix|release)/.+ ]]; then
   echo "error: invalid branch name '$branch'" >&2
   echo "" >&2
   echo "expected a context prefix before the branch name:" >&2
@@ -25,7 +25,8 @@ if ! [[ "$branch" =~ ^(feat|refactor|bug|fix|chore|hotfix)/.+ ]]; then
   echo "  bug/<name>      - bug fixes" >&2
   echo "  fix/<name>      - immediate fixes merged to dev/main" >&2
   echo "  hotfix/<name>   - urgent production fixes" >&2
-  echo "  chore/<name>    - maintenance tasks" >&2
+  echo "  chore/<name>    - maintenance tasks
+  release/<name>  - release candidates merged to main" >&2
   echo "" >&2
   echo "create a properly named branch, e.g.: git checkout -b feat/github_issue_no-your-branch-name" >&2
   echo "or use: make branch type=feat issue=github_issue_no name=your-branch-name" >&2

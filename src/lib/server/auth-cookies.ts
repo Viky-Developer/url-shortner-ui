@@ -69,8 +69,13 @@ export function setUserMetadataCookie(cookies: Cookies, user: UserResponse): voi
 export function getUserMetadataCookie(
 	cookies: Cookies
 ): Pick<UserResponse, 'passwordAgeDays' | 'changeSuggested' | 'status'> {
+	const rawMetadata = cookies.get(USER_METADATA_COOKIE);
+	if (rawMetadata === 'ACTIVE' || rawMetadata === 'PENDING_DELETION' || rawMetadata === 'DELETED') {
+		return { status: rawMetadata, changeSuggested: false };
+	}
+
 	try {
-		const value: unknown = JSON.parse(cookies.get(USER_METADATA_COOKIE) ?? 'null');
+		const value: unknown = JSON.parse(rawMetadata ?? 'null');
 		if (!value || typeof value !== 'object') return {};
 		const metadata = value as Record<string, unknown>;
 		return {

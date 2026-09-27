@@ -31,7 +31,10 @@ function safeRedirectTarget(url: URL): string {
 	}
 }
 
-function loginErrorMessage(status: number): string {
+function loginErrorMessage(status: number, backendMessage?: string): string {
+	if ((status === 401 || status === 403) && /uses Google sign-in/i.test(backendMessage ?? '')) {
+		return 'Please sign in with Google using the “Continue with Google” button.';
+	}
 	if (status === 401 || status === 403) return 'The email or password is incorrect.';
 	if (status === 409) return 'An active session is preventing sign-in. Please try again.';
 	if (status === 429) return 'Too many sign-in attempts. Please wait and try again.';
@@ -41,7 +44,11 @@ function loginErrorMessage(status: number): string {
 
 export const load: PageServerLoad = ({ locals, url }) => {
 	if (locals.authenticated) return redirect(303, safeRedirectTarget(url));
-	return { sessionExpired: url.searchParams.get('reason') === 'session-expired' };
+	return {
+		sessionExpired: url.searchParams.get('reason') === 'session-expired',
+		oauthError: url.searchParams.get('oauthError'),
+		redirectTo: safeRedirectTarget(url)
+	};
 };
 
 export const actions = {
@@ -115,9 +122,10 @@ export const actions = {
 		} catch (error) {
 			if (error instanceof AuthApiError) {
 				const status = error.status >= 400 && error.status <= 599 ? error.status : 502;
+
 				return fail(status, {
 					success: false,
-					message: loginErrorMessage(status),
+					message: loginErrorMessage(status, error.message),
 					errors: {},
 					values
 				});

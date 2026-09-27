@@ -15,6 +15,7 @@
 	} = $props();
 
 	const userName = $derived(user?.displayName || 'User');
+	const createLinkDisabled = $derived(user?.status?.toUpperCase() === 'PENDING_DELETION');
 
 	const pageTitle = $derived.by(() => {
 		if (page.url.pathname.startsWith('/sessions')) return 'Sessions';
@@ -60,7 +61,9 @@
 			<button
 				type="button"
 				onclick={openCreateLink}
-				class="font-label-caps hover:bg-primary-container inline-flex size-9 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-lg bg-primary text-label-caps text-primary-foreground shadow-sm transition-all hover:-translate-y-0.5 active:translate-y-0 active:scale-95 md:h-auto md:w-auto md:px-4 md:py-2"
+				disabled={createLinkDisabled}
+				title={createLinkDisabled ? 'Restore your account to create links' : undefined}
+				class="font-label-caps hover:bg-primary-container inline-flex size-9 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-lg bg-primary text-label-caps text-primary-foreground shadow-sm transition-all hover:-translate-y-0.5 active:translate-y-0 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none disabled:hover:translate-y-0 md:h-auto md:w-auto md:px-4 md:py-2"
 				aria-label="Create new link"
 			>
 				<Plus class="size-5" />

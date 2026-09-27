@@ -101,7 +101,8 @@ describe('access token verification', () => {
 				exp: EXPIRES_AT,
 				display_name: 'Alex Rivera',
 				email: 'alex@example.com',
-				role: 'USER'
+				role: 'USER',
+				provider: 'GOOGLE'
 			}),
 			VALID_NOW
 		);
@@ -110,8 +111,18 @@ describe('access token verification', () => {
 			id: 'user-id',
 			displayName: 'Alex Rivera',
 			email: 'alex@example.com',
-			role: 'USER'
+			role: 'USER',
+			provider: 'GOOGLE'
 		});
+	});
+
+	it('ignores an unrecognized provider claim', async () => {
+		const claims = await verifyAccessToken(
+			createToken({ iat: ISSUED_AT, exp: EXPIRES_AT, provider: 'UNKNOWN' }),
+			VALID_NOW
+		);
+
+		expect(claims).not.toHaveProperty('provider');
 	});
 
 	it('uses the verified email name when display name is absent', async () => {

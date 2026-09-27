@@ -7,6 +7,9 @@ describe('signup page', () => {
 	it('validates the form and toggles password visibility', async () => {
 		render(SignupPage);
 
+		await expect.element(page.getByRole('separator', { name: 'or' })).toBeInTheDocument();
+		await page.getByRole('button', { name: 'Continue with Email' }).click();
+
 		const submitButton = page.getByRole('button', { name: 'Create Account' });
 		const passwordInput = page.getByTestId('password-input');
 

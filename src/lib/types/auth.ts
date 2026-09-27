@@ -20,6 +20,8 @@ export interface ChangePasswordRequest {
 	newPassword: string;
 }
 
+export type AuthProvider = 'SYSTEM' | 'GOOGLE';
+
 export interface UserResponse {
 	id: string | null;
 	email: string | null;
@@ -48,6 +50,7 @@ export interface AuthTokens {
 export interface AuthenticatedUser {
 	id: string;
 	displayName: string;
+	provider?: AuthProvider;
 	email?: string;
 	role?: string;
 	passwordAgeDays?: number | null;

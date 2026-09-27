@@ -128,4 +128,14 @@ describe('authentication cookies', () => {
 			expect.objectContaining({ httpOnly: true })
 		);
 	});
+
+	it('reads the compact account status written by the backend OAuth callback', () => {
+		const cookies = createCookies();
+		vi.mocked(cookies.get).mockReturnValue('PENDING_DELETION');
+
+		expect(getUserMetadataCookie(cookies)).toEqual({
+			status: 'PENDING_DELETION',
+			changeSuggested: false
+		});
+	});
 });

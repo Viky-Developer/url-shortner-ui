@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { base, resolve } from '$app/paths';
-	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
+	import { goto, invalidateAll } from '$app/navigation';
 	import { navigating } from '$app/state';
-	import { enhance } from '$app/forms';
+	import { updateShortURLRequest } from '$lib/client/short-urls';
 	import { DatePicker } from '$lib/components/ui/datepicker';
 	import { Pagination } from '$lib/components/ui/pagination';
 	import {
@@ -165,7 +165,7 @@
 		modalError = '';
 		loadingURL = true;
 		try {
-			const response = await fetch(`${base}/my-links/${encodeURIComponent(id)}`);
+			const response = await fetch(resolve('/my-links/[id]', { id }));
 			const payload: unknown = await response.json();
 			if (!response.ok) throw new Error(responseMessage(payload, 'Unable to load this URL.'));
 			const url = payload as ShortURL;
@@ -214,7 +214,7 @@
 		const toastId = toast.loading(permanent ? 'Permanently deleting link…' : 'Deleting link…');
 		try {
 			const response = await fetch(
-				`${base}/my-links/${encodeURIComponent(deleteTarget.id)}${permanent ? '?mode=hard' : ''}`,
+				`${resolve('/my-links/[id]', { id: deleteTarget.id })}${permanent ? '?mode=hard' : ''}`,
 				{ method: 'DELETE' }
 			);
 			const payload: unknown = await response.json();
@@ -235,6 +235,43 @@
 			toast.error(deleteError, { id: toastId });
 		} finally {
 			deleting = false;
+		}
+	}
+
+	async function saveUpdate(event: SubmitEvent): Promise<void> {
+		event.preventDefault();
+		if (!selected || saving) return;
+
+		saving = true;
+		modalError = '';
+		const toastId = toast.loading('Updating your link…');
+		const selectedId = selected.id;
+		const savedStatus = values.status;
+		try {
+			const expiresAt = expirationISOString();
+			const response = await updateShortURLRequest(
+				fetch,
+				resolve('/my-links/[id]', { id: selectedId }),
+				{
+					originalURL: values.originalURL.trim(),
+					title: values.title.trim(),
+					description: values.description.trim(),
+					status: values.status,
+					...(expiresAt ? { expiresAt } : {})
+				}
+			);
+			const payload: unknown = await response.json().catch(() => undefined);
+			if (!response.ok) throw new Error(responseMessage(payload, 'Unable to update this URL.'));
+
+			statusOverrides = { ...statusOverrides, [selectedId]: savedStatus };
+			toast.success('Link updated successfully.', { id: toastId });
+			selected = undefined;
+			await invalidateAll();
+		} catch (error) {
+			modalError = error instanceof Error ? error.message : 'Unable to update this URL.';
+			toast.error(modalError, { id: toastId });
+		} finally {
+			saving = false;
 		}
 	}
 
@@ -622,34 +659,7 @@
 					</div>
 				</form>
 			{:else}
-				<form
-					method="POST"
-					action="?/update"
-					use:enhance={() => {
-						saving = true;
-						modalError = '';
-						const toastId = toast.loading('Updating your link…');
-						const selectedId = selected!.id;
-						const savedStatus = values.status;
-						return async ({ result, update }) => {
-							if (result.type === 'success') {
-								statusOverrides = { ...statusOverrides, [selectedId]: savedStatus };
-								toast.success('Link updated successfully.', { id: toastId });
-								selected = undefined;
-								await update();
-							} else {
-								const message =
-									result.type === 'failure' && typeof result.data?.message === 'string'
-										? result.data.message
-										: 'Unable to update this URL.';
-								modalError = message;
-								toast.error(message, { id: toastId });
-							}
-							saving = false;
-						};
-					}}
-					class="grid gap-5"
-				>
+				<form onsubmit={saveUpdate} class="grid gap-5">
 					<input type="hidden" name="id" value={selected?.id} />
 					<input type="hidden" name="originalURL" value={values.originalURL.trim()} />
 					<input type="hidden" name="title" value={values.title.trim()} />

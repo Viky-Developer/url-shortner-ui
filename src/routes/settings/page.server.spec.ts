@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { actions, load } from './+page.server';
 import { cancelAccountDeletion, scheduleAccountDeletion } from '$lib/server/account';
 import { clearAuthCookies, setAccountStatusCookie } from '$lib/server/auth-cookies';
-import { changePassword } from '$lib/server/auth';
+import { AuthApiError, changePassword } from '$lib/server/auth';
 
 vi.mock('$lib/server/account', () => ({
 	scheduleAccountDeletion: vi.fn(),
@@ -23,6 +23,7 @@ function event(confirmation = 'delete my account') {
 	return {
 		fetch: vi.fn(),
 		cookies: {},
+		locals: { user: { id: '1', displayName: 'Vicky', provider: 'SYSTEM' } },
 		parent: vi.fn().mockResolvedValue({ user: { id: '1', displayName: 'Vicky' } }),
 		request: new Request('http://localhost/settings', { method: 'POST', body })
 	};
@@ -68,6 +69,21 @@ describe('settings account lifecycle', () => {
 		expect(changePassword).not.toHaveBeenCalled();
 	});
 
+	it('blocks password changes for Google accounts', async () => {
+		const input = passwordEvent('Current1', 'Different2', 'Different2');
+		input.locals.user.provider = 'GOOGLE';
+
+		const result = await actions.changePassword(input as unknown as ChangePasswordEvent);
+
+		expect(result).toMatchObject({
+			status: 403,
+			data: {
+				error: 'Password changes are only available for accounts that sign in with email.'
+			}
+		});
+		expect(changePassword).not.toHaveBeenCalled();
+	});
+
 	it('rejects a weak or mismatched new password', async () => {
 		const weak = await actions.changePassword(
 			passwordEvent('Current1', 'weak', 'weak') as unknown as ChangePasswordEvent
@@ -94,15 +110,32 @@ describe('settings account lifecycle', () => {
 		expect(scheduleAccountDeletion).not.toHaveBeenCalled();
 	});
 
-	it('clears the revoked session and returns a delayed login redirect', async () => {
+	it('keeps the recovery session and marks a newly scheduled deletion as pending', async () => {
 		const result = await actions.scheduleDeletion(event() as unknown as ScheduleEvent);
 		expect(result).toEqual({
-			success: 'Account deletion scheduled. Redirecting to sign in…',
-			redirectTo: '/login',
-			redirectDelayMs: 2000
+			success: 'Account deletion scheduled. Opening account recovery…',
+			redirectTo: '/settings',
+			redirectDelayMs: 3000
 		});
 		expect(scheduleAccountDeletion).toHaveBeenCalledOnce();
-		expect(clearAuthCookies).toHaveBeenCalledOnce();
+		expect(setAccountStatusCookie).toHaveBeenCalledWith(expect.anything(), 'PENDING_DELETION');
+		expect(clearAuthCookies).not.toHaveBeenCalled();
+	});
+
+	it('synchronizes an account that the backend reports is already pending deletion', async () => {
+		vi.mocked(scheduleAccountDeletion).mockRejectedValue(
+			new AuthApiError('account is already PENDING_DELETION', 409)
+		);
+
+		const result = await actions.scheduleDeletion(event() as unknown as ScheduleEvent);
+
+		expect(result).toEqual({
+			success: 'Account deletion is already pending. Opening account recovery…',
+			redirectTo: '/settings',
+			redirectDelayMs: 3000
+		});
+		expect(setAccountStatusCookie).toHaveBeenCalledWith(expect.anything(), 'PENDING_DELETION');
+		expect(clearAuthCookies).not.toHaveBeenCalled();
 	});
 
 	it('restores an account and returns the dashboard destination', async () => {
