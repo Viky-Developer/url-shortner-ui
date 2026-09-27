@@ -33,7 +33,7 @@ function safeRedirectTarget(url: URL): string {
 
 function loginErrorMessage(status: number, backendMessage?: string): string {
 	if ((status === 401 || status === 403) && /uses Google sign-in/i.test(backendMessage ?? '')) {
-		return 'Please use “Continue with Google” to sign in.';
+		return 'Please sign in with Google using the “Continue with Google” button.';
 	}
 	if (status === 401 || status === 403) return 'The email or password is incorrect.';
 	if (status === 409) return 'An active session is preventing sign-in. Please try again.';
