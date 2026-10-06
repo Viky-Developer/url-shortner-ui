@@ -1,5 +1,9 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { _buildBackendTargetUrl, _getBackendBaseUrl, _handleProxy } from './+server';
+import { _buildBackendTargetUrl, _handleProxy } from './+server';
+
+vi.mock('$env/dynamic/private', () => ({
+	env: { APP_ENV: 'https://backend.test/api/v1' }
+}));
 
 describe('API v1 proxy handler', () => {
 	const originalFetch = globalThis.fetch;
@@ -9,39 +13,19 @@ describe('API v1 proxy handler', () => {
 		vi.restoreAllMocks();
 	});
 
-	describe('getBackendBaseUrl', () => {
-		it('routes production Netlify host to production Render backend', () => {
-			expect(_getBackendBaseUrl('app-linkpluse.netlify.app')).toBe(
-				'https://api-linkpluse.onrender.com/api/v1'
-			);
-			expect(_getBackendBaseUrl('deploy-preview-12--app-linkpluse.netlify.app')).toBe(
-				'https://api-linkpluse.onrender.com/api/v1'
-			);
-		});
-
-		it('routes development Netlify host to development Render backend', () => {
-			expect(_getBackendBaseUrl('dev-linkpluse.netlify.app')).toBe(
-				'https://url-shortner-0skn.onrender.com/api/v1'
-			);
-			expect(_getBackendBaseUrl('deploy-preview-52--dev-linkpluse.netlify.app')).toBe(
-				'https://url-shortner-0skn.onrender.com/api/v1'
-			);
-		});
-	});
-
 	describe('buildBackendTargetUrl', () => {
 		it('builds target URL preserving subpath and query parameters', () => {
 			const url = new URL(
-				'https://dev-linkpluse.netlify.app/api/v1/auth/google/callback?code=abc123&state=xyz'
+				'https://frontend.test/api/v1/auth/google/callback?code=abc123&state=xyz'
 			);
 			expect(_buildBackendTargetUrl(url)).toBe(
-				'https://url-shortner-0skn.onrender.com/api/v1/auth/google/callback?code=abc123&state=xyz'
+				'https://backend.test/api/v1/auth/google/callback?code=abc123&state=xyz'
 			);
 		});
 
 		it('handles root /api/v1 path', () => {
 			const url = new URL('https://app-linkpluse.netlify.app/api/v1');
-			expect(_buildBackendTargetUrl(url)).toBe('https://api-linkpluse.onrender.com/api/v1');
+			expect(_buildBackendTargetUrl(url)).toBe('https://backend.test/api/v1');
 		});
 	});
 
@@ -62,23 +46,23 @@ describe('API v1 proxy handler', () => {
 				});
 			});
 
-			const request = new Request('https://dev-linkpluse.netlify.app/api/v1/urls', {
+			const request = new Request('https://frontend.test/api/v1/urls', {
 				method: 'GET',
 				headers: {
-					host: 'dev-linkpluse.netlify.app',
+					host: 'frontend.test',
 					authorization: 'Bearer token-123'
 				}
 			});
 
 			const event = {
 				request,
-				url: new URL('https://dev-linkpluse.netlify.app/api/v1/urls'),
+				url: new URL('https://frontend.test/api/v1/urls'),
 				params: { path: 'urls' }
 			} as unknown as Parameters<typeof _handleProxy>[0];
 
 			const response = await _handleProxy(event);
 
-			expect(capturedUrl).toBe('https://url-shortner-0skn.onrender.com/api/v1/urls');
+			expect(capturedUrl).toBe('https://backend.test/api/v1/urls');
 			const forwardedHeaders = new Headers(capturedInit?.headers);
 			expect(forwardedHeaders.get('host')).toBeNull();
 			expect(forwardedHeaders.get('authorization')).toBe('Bearer token-123');
@@ -93,17 +77,14 @@ describe('API v1 proxy handler', () => {
 		it('sanitizes Set-Cookie headers and rewrites redirect location', async () => {
 			globalThis.fetch = vi.fn().mockImplementation(async () => {
 				const responseHeaders = new Headers();
-				responseHeaders.set(
-					'location',
-					'https://url-shortner-0skn.onrender.com/dashboard?logged_in=1'
+				responseHeaders.set('location', 'https://backend.test/dashboard?logged_in=1');
+				responseHeaders.append(
+					'set-cookie',
+					'access_token=token_abc; Domain=backend.test; Path=/; HttpOnly'
 				);
 				responseHeaders.append(
 					'set-cookie',
-					'access_token=token_abc; Domain=url-shortner-0skn.onrender.com; Path=/; HttpOnly'
-				);
-				responseHeaders.append(
-					'set-cookie',
-					'refresh_token=token_xyz; domain=url-shortner-0skn.onrender.com; Path=/; HttpOnly'
+					'refresh_token=token_xyz; domain=backend.test; Path=/; HttpOnly'
 				);
 
 				return new Response(null, {
@@ -113,13 +94,13 @@ describe('API v1 proxy handler', () => {
 			});
 
 			const request = new Request(
-				'https://dev-linkpluse.netlify.app/api/v1/auth/google/callback?code=abc',
+				'https://frontend.test/api/v1/auth/google/callback?code=abc',
 				{ method: 'GET' }
 			);
 
 			const event = {
 				request,
-				url: new URL('https://dev-linkpluse.netlify.app/api/v1/auth/google/callback?code=abc'),
+				url: new URL('https://frontend.test/api/v1/auth/google/callback?code=abc'),
 				params: { path: 'auth/google/callback' }
 			} as unknown as Parameters<typeof _handleProxy>[0];
 
@@ -127,7 +108,7 @@ describe('API v1 proxy handler', () => {
 
 			expect(response.status).toBe(302);
 			expect(response.headers.get('location')).toBe(
-				'https://dev-linkpluse.netlify.app/dashboard?logged_in=1'
+				'https://frontend.test/dashboard?logged_in=1'
 			);
 
 			const cookies = response.headers.getSetCookie();
@@ -139,13 +120,13 @@ describe('API v1 proxy handler', () => {
 		it('returns 502 status if backend service fails', async () => {
 			globalThis.fetch = vi.fn().mockRejectedValue(new Error('Connection refused'));
 
-			const request = new Request('https://dev-linkpluse.netlify.app/api/v1/urls', {
+			const request = new Request('https://frontend.test/api/v1/urls', {
 				method: 'GET'
 			});
 
 			const event = {
 				request,
-				url: new URL('https://dev-linkpluse.netlify.app/api/v1/urls'),
+				url: new URL('https://frontend.test/api/v1/urls'),
 				params: { path: 'urls' }
 			} as unknown as Parameters<typeof _handleProxy>[0];
 

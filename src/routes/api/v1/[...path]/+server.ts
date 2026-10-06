@@ -1,32 +1,8 @@
 import type { RequestHandler } from './$types';
-import { env } from '$env/dynamic/private';
-
-export function _getBackendBaseUrl(hostname: string): string {
-	if (hostname.includes('app-linkpluse')) {
-		return 'https://api-linkpluse.onrender.com/api/v1';
-	}
-
-	if (hostname.includes('dev-linkpluse')) {
-		return 'https://url-shortner-0skn.onrender.com/api/v1';
-	}
-
-	const configured = env.APP_ENV?.trim();
-	if (configured) {
-		try {
-			const parsed = new URL(configured);
-			if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
-				return parsed.href.replace(/\/$/, '');
-			}
-		} catch {
-			// ignore invalid URL and fall back
-		}
-	}
-
-	return 'https://url-shortner-0skn.onrender.com/api/v1';
-}
+import { getBackendUrl } from '$lib/server/auth';
 
 export function _buildBackendTargetUrl(url: URL): string {
-	const backendBase = _getBackendBaseUrl(url.hostname);
+	const backendBase = getBackendUrl();
 	const subPath = url.pathname.replace(/^\/api\/v1/, '');
 	return `${backendBase}${subPath}${url.search}`;
 }
