@@ -93,10 +93,9 @@ describe('API v1 proxy handler', () => {
 				});
 			});
 
-			const request = new Request(
-				'https://frontend.test/api/v1/auth/google/callback?code=abc',
-				{ method: 'GET' }
-			);
+			const request = new Request('https://frontend.test/api/v1/auth/google/callback?code=abc', {
+				method: 'GET'
+			});
 
 			const event = {
 				request,
@@ -107,9 +106,7 @@ describe('API v1 proxy handler', () => {
 			const response = await _handleProxy(event);
 
 			expect(response.status).toBe(302);
-			expect(response.headers.get('location')).toBe(
-				'https://frontend.test/dashboard?logged_in=1'
-			);
+			expect(response.headers.get('location')).toBe('https://frontend.test/dashboard?logged_in=1');
 
 			const cookies = response.headers.getSetCookie();
 			expect(cookies).toHaveLength(2);
