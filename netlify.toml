@@ -5,21 +5,5 @@ publish = "build"
 [build.environment]
 NODE_VERSION = "24"
 
-[context.production.environment]
-BACKEND_API_URL = "https://api-linkpluse.onrender.com"
-
-[context.deploy-preview.environment]
-BACKEND_API_URL = "https://url-shortner-0skn.onrender.com"
-
-[context.branch-deploy.environment]
-BACKEND_API_URL = "https://url-shortner-0skn.onrender.com"
-
 [functions]
 node_bundler = "esbuild"
-
-# Fallback proxy for API traffic
-[[redirects]]
-  from = "/api/v1/*"
-  to = "https://url-shortner-0skn.onrender.com/api/v1/:splat"
-  status = 200
-  force = true
