@@ -1,0 +1,3 @@
+https://app-linkpluse.netlify.app/api/v1/*  https://api-linkpluse.onrender.com/api/v1/:splat  200!
+https://dev-linkpluse.netlify.app/api/v1/*  https://url-shortner-0skn.onrender.com/api/v1/:splat  200!
+/api/v1/*                                  https://url-shortner-0skn.onrender.com/api/v1/:splat  200!

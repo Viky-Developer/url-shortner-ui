@@ -7,3 +7,24 @@ NODE_VERSION = "24"
 
 [functions]
 node_bundler = "esbuild"
+
+# Proxy production API traffic to the production Render service
+[[redirects]]
+  from = "https://app-linkpluse.netlify.app/api/v1/*"
+  to = "https://api-linkpluse.onrender.com/api/v1/:splat"
+  status = 200
+  force = true
+
+# Proxy stable development-host API traffic to the development Render service
+[[redirects]]
+  from = "https://dev-linkpluse.netlify.app/api/v1/*"
+  to = "https://url-shortner-0skn.onrender.com/api/v1/:splat"
+  status = 200
+  force = true
+
+# General fallback proxy for any other preview or localhost
+[[redirects]]
+  from = "/api/v1/*"
+  to = "https://url-shortner-0skn.onrender.com/api/v1/:splat"
+  status = 200
+  force = true
