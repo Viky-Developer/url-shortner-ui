@@ -29,7 +29,8 @@ export function isPublicPath(pathname: string): boolean {
 	return (
 		PUBLIC_PATHS.has(pathname) ||
 		pathname === '/demo' ||
-		PUBLIC_PREFIXES.some((prefix) => pathname.startsWith(prefix))
+		PUBLIC_PREFIXES.some((prefix) => pathname.startsWith(prefix)) ||
+		pathname.startsWith('/api/v1/')
 	);
 }
 
